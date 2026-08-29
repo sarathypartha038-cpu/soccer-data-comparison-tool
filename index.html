@@ -56,6 +56,11 @@ h1 {
     background: #005bbd;
 }
 
+.tool:disabled {
+    background: #a0c4f1;
+    cursor: not-allowed;
+}
+
 .tool-secondary {
     background: #6c757d;
 }
@@ -228,6 +233,29 @@ tr:hover {
     gap: 10px;
     margin-top: 20px;
 }
+
+/* Loading Spinner */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(0, 74, 153, 0.3);
+    border-radius: 50%;
+    border-top-color: #004a99;
+    animation: spin 1s ease-in-out infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-container {
+    padding: 30px;
+    color: #666;
+    font-size: 16px;
+}
 </style>
 </head>
 <body>
@@ -289,7 +317,7 @@ tr:hover {
             <button class="close-btn" onclick="closeModal()">&times;</button>
         </div>
         <form id="compForm" onsubmit="handleSaveCompetition(event)">
-            <input type="hidden" id="editIndex" value="-1">
+            <input type="hidden" id="editDocId" value="">
             
             <div class="form-group">
                 <label for="sportName">Sport Name</label>
@@ -315,14 +343,48 @@ tr:hover {
 
             <div class="modal-footer">
                 <button type="button" class="tool tool-secondary tool-sm" onclick="closeModal()">Cancel</button>
-                <button type="submit" class="tool tool-sm">Save Competition</button>
+                <button type="submit" id="saveCompBtn" class="tool tool-sm">Save Competition</button>
             </div>
         </form>
     </div>
 </div>
 
-<script>
-// User Role Structure
+<!-- FIREBASE MODULE SCRIPT -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { 
+    getFirestore, 
+    collection, 
+    addDoc, 
+    doc, 
+    updateDoc, 
+    deleteDoc, 
+    onSnapshot, 
+    query, 
+    orderBy, 
+    serverTimestamp 
+} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+// Firebase Configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAFNEM4kI18iWCZoz8dBqyUhLGiV0LtX9E",
+  authDomain: "soccer-ed-competitions.firebaseapp.com",
+  projectId: "soccer-ed-competitions",
+  storageBucket: "soccer-ed-competitions.firebasestorage.app",
+  messagingSenderId: "270774432669",
+  appId: "1:270774432669:web:61c9fe8a6a7c2e1a277574"
+};
+
+// Initialize Firebase & Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const compCollectionRef = collection(db, "competitions");
+
+// Global competitions cache for UI indexing/modals
+let globalCompetitions = [];
+let unsubscribeRealtime = null;
+
+// User Credentials Definition
 const users = [
     {
         username: "Partha Sarathy",
@@ -335,9 +397,6 @@ const users = [
         role: "user"
     }
 ];
-
-// Empty default competitions list
-const defaultCompetitions = [];
 
 // Active Session State
 let currentUser = null;
@@ -354,7 +413,6 @@ function checkAuthState() {
         document.getElementById("dashboardView").style.display = "block";
         document.getElementById("userBadge").innerText = `Logged in as: ${currentUser.username} (${currentUser.role.toUpperCase()})`;
         
-        // Render Dashboard UI according to roles
         if (currentUser.role === "admin") {
             document.getElementById("addCompBtn").style.display = "inline-block";
             document.getElementById("actionsHeader").style.display = "table-cell";
@@ -363,15 +421,19 @@ function checkAuthState() {
             document.getElementById("actionsHeader").style.display = "none";
         }
 
-        loadCompetitions();
+        subscribeToCompetitions();
     } else {
         currentUser = null;
+        if (unsubscribeRealtime) {
+            unsubscribeRealtime();
+            unsubscribeRealtime = null;
+        }
         document.getElementById("loginView").style.display = "block";
         document.getElementById("dashboardView").style.display = "none";
     }
 }
 
-// Permission Validator Guard
+// Security Guards
 function isAdmin() {
     return currentUser && currentUser.role === "admin";
 }
@@ -384,8 +446,8 @@ function enforceAdminAccess() {
     return true;
 }
 
-// Login Handler
-function handleLogin(event) {
+// Auth Handlers
+window.handleLogin = function(event) {
     event.preventDefault();
     const userVal = document.getElementById("username").value.trim();
     const passVal = document.getElementById("password").value;
@@ -402,67 +464,68 @@ function handleLogin(event) {
     } else {
         errorEl.style.display = "block";
     }
-}
+};
 
-// Logout Handler
-function handleLogout() {
+window.handleLogout = function() {
     localStorage.removeItem("soccer_ed_user");
     checkAuthState();
-}
+};
 
-// LocalStorage Data Operations
-function getStoredCompetitions() {
-    const data = localStorage.getItem("soccer_ed_competitions");
-    if (!data) {
-        localStorage.setItem("soccer_ed_competitions", JSON.stringify(defaultCompetitions));
-        return defaultCompetitions;
-    }
-    return JSON.parse(data);
-}
-
-function saveStoredCompetitions(list) {
-    localStorage.setItem("soccer_ed_competitions", JSON.stringify(list));
-}
-
-// Render Dashboard Table
-function loadCompetitions() {
-    const list = getStoredCompetitions();
+// Firestore Realtime Subscription & Rendering
+function subscribeToCompetitions() {
     const tbody = document.getElementById("competitionTableBody");
-    tbody.innerHTML = "";
-
     const userIsAdmin = isAdmin();
+    const colSpan = userIsAdmin ? 5 : 4;
 
-    if (list.length === 0) {
-        const colSpan = userIsAdmin ? 5 : 4;
-        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color: #777;">No competitions found.</td></tr>`;
-        return;
-    }
+    // Loading Indicator
+    tbody.innerHTML = `<tr><td colspan="${colSpan}" class="loading-container"><span class="spinner"></span> Loading competitions...</td></tr>`;
 
-    list.forEach((item, idx) => {
-        const row = document.createElement("tr");
-        
-        let actionsHtml = "";
-        if (userIsAdmin) {
-            actionsHtml = `
-                <td style="text-align: center;">
-                    <button class="tool tool-sm" onclick="openEditModal(${idx})">Edit</button>
-                    <button class="tool tool-danger tool-sm" onclick="deleteCompetition(${idx})">Delete</button>
-                </td>
-            `;
+    const q = query(compCollectionRef, orderBy("createdAt", "asc"));
+
+    if (unsubscribeRealtime) unsubscribeRealtime();
+
+    unsubscribeRealtime = onSnapshot(q, (snapshot) => {
+        globalCompetitions = [];
+        tbody.innerHTML = "";
+
+        if (snapshot.empty) {
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color: #777;">No competitions found.</td></tr>`;
+            return;
         }
 
-        row.innerHTML = `
-            <td>${escapeHtml(item.sport)}</td>
-            <td>${escapeHtml(item.country)}</td>
-            <td>${escapeHtml(item.competition)}</td>
-            <td>
-                <a class="link-file" href="${escapeHtml(item.file)}" target="_blank" title="Open ${escapeHtml(item.competition)} Comparator">
-                    Open ${escapeHtml(item.file)}
-                </a>
-            </td>
-            ${actionsHtml}
-        `;
-        tbody.appendChild(row);
+        snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const item = { id: docSnap.id, ...data };
+            globalCompetitions.push(item);
+
+            const row = document.createElement("tr");
+            
+            let actionsHtml = "";
+            if (userIsAdmin) {
+                actionsHtml = `
+                    <td style="text-align: center;">
+                        <button class="tool tool-sm" onclick="openEditModal('${docSnap.id}')">Edit</button>
+                        <button class="tool tool-danger tool-sm" onclick="deleteCompetition('${docSnap.id}')">Delete</button>
+                    </td>
+                `;
+            }
+
+            row.innerHTML = `
+                <td>${escapeHtml(item.sport || '')}</td>
+                <td>${escapeHtml(item.country || '')}</td>
+                <td>${escapeHtml(item.competition || '')}</td>
+                <td>
+                    <a class="link-file" href="${escapeHtml(item.file || '')}" target="_blank" title="Open ${escapeHtml(item.competition || '')} Comparator">
+                        Open ${escapeHtml(item.file || '')}
+                    </a>
+                </td>
+                ${actionsHtml}
+            `;
+            tbody.appendChild(row);
+        });
+    }, (error) => {
+        console.error("Error fetching competitions from Firestore: ", error);
+        tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align:center; color: #dc3545;">Failed to load data from Firestore.</td></tr>`;
     });
 }
 
@@ -488,48 +551,47 @@ function generateFileName(country, competition) {
     return "";
 }
 
-function updateGeneratedFilename() {
+window.updateGeneratedFilename = function() {
     const country = document.getElementById("countryName").value;
     const comp = document.getElementById("competitionName").value;
     document.getElementById("fileName").value = generateFileName(country, comp);
-}
+};
 
-// Modal Handlers
-function openAddModal() {
+// Modal Operations
+window.openAddModal = function() {
     if (!enforceAdminAccess()) return;
 
     document.getElementById("modalTitle").innerText = "Add Competition";
-    document.getElementById("editIndex").value = "-1";
+    document.getElementById("editDocId").value = "";
     document.getElementById("compForm").reset();
     document.getElementById("sportName").value = "Soccer";
     document.getElementById("modalError").style.display = "none";
     document.getElementById("compModal").style.display = "flex";
-    updateGeneratedFilename();
-}
+    window.updateGeneratedFilename();
+};
 
-function openEditModal(index) {
+window.openEditModal = function(docId) {
     if (!enforceAdminAccess()) return;
 
-    const list = getStoredCompetitions();
-    const item = list[index];
+    const item = globalCompetitions.find(c => c.id === docId);
     if (!item) return;
 
     document.getElementById("modalTitle").innerText = "Edit Competition";
-    document.getElementById("editIndex").value = index;
+    document.getElementById("editDocId").value = docId;
     document.getElementById("sportName").value = item.sport;
     document.getElementById("countryName").value = item.country;
     document.getElementById("competitionName").value = item.competition;
     document.getElementById("modalError").style.display = "none";
-    updateGeneratedFilename();
+    window.updateGeneratedFilename();
     document.getElementById("compModal").style.display = "flex";
-}
+};
 
-function closeModal() {
+window.closeModal = function() {
     document.getElementById("compModal").style.display = "none";
-}
+};
 
-// Create / Update Action
-function handleSaveCompetition(event) {
+// Create / Update Firestore Actions
+window.handleSaveCompetition = async function(event) {
     event.preventDefault();
     if (!enforceAdminAccess()) return;
 
@@ -537,41 +599,68 @@ function handleSaveCompetition(event) {
     const country = document.getElementById("countryName").value.trim();
     const competition = document.getElementById("competitionName").value.trim();
     const file = document.getElementById("fileName").value.trim();
-    const editIdx = parseInt(document.getElementById("editIndex").value, 10);
+    const docId = document.getElementById("editDocId").value;
     const errorEl = document.getElementById("modalError");
+    const saveBtn = document.getElementById("saveCompBtn");
 
     if (!sport || !country || !competition || !file) {
+        errorEl.innerText = "Please fill out all mandatory fields.";
         errorEl.style.display = "block";
         return;
     }
 
-    const list = getStoredCompetitions();
-    const newItem = { sport, country, competition, file };
+    errorEl.style.display = "none";
+    const originalBtnText = saveBtn.innerText;
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Saving...";
 
-    if (editIdx >= 0 && editIdx < list.length) {
-        list[editIdx] = newItem;
-    } else {
-        list.push(newItem);
+    try {
+        if (docId) {
+            // Update Firestore Doc
+            const docRef = doc(db, "competitions", docId);
+            await updateDoc(docRef, {
+                sport,
+                country,
+                competition,
+                file
+            });
+        } else {
+            // Add Firestore Doc
+            await addDoc(compCollectionRef, {
+                sport,
+                country,
+                competition,
+                file,
+                createdAt: serverTimestamp()
+            });
+        }
+        window.closeModal();
+    } catch (err) {
+        console.error("Firestore Save Error: ", err);
+        errorEl.innerText = "Error saving data. Please try again.";
+        errorEl.style.display = "block";
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerText = originalBtnText;
     }
+};
 
-    saveStoredCompetitions(list);
-    closeModal();
-    loadCompetitions();
-}
-
-// Delete Action
-function deleteCompetition(index) {
+// Delete Firestore Action
+window.deleteCompetition = async function(docId) {
     if (!enforceAdminAccess()) return;
 
     if (confirm("Are you sure you want to delete this competition?")) {
-        const list = getStoredCompetitions();
-        list.splice(index, 1);
-        saveStoredCompetitions(list);
-        loadCompetitions();
+        try {
+            const docRef = doc(db, "competitions", docId);
+            await deleteDoc(docRef);
+        } catch (err) {
+            console.error("Firestore Delete Error: ", err);
+            alert("Failed to delete the competition. Please try again.");
+        }
     }
-}
+};
 
-// Helper utility for XSS prevention
+// XSS Prevention Utility
 function escapeHtml(str) {
     return String(str)
         .replace(/&/g, "&amp;")
