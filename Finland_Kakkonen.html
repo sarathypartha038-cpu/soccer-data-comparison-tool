@@ -365,200 +365,128 @@
     <script>
         const CONSOLE_CODE_1 = `(() => {
 
+function getMinute(text) {
+    const match = text.match(/(\\d+\\+\\d+|\\d+)\\s*'/);
+    return match ? match[1] + "'" : '';
+}
+
+function getSortValue(minute) {
+    const m = minute.replace("'", "");
+    if (m.includes('+')) {
+        const [base, extra] = m.split('+');
+        return Number(base) + Number(extra) / 100;
+    }
+    return Number(m);
+}
+
 const goals = [];
 const cards = [];
 const substitutions = [];
 
-const events =
-    [...document.querySelectorAll('ul.matchevents li')];
+const events = [...document.querySelectorAll('ul.matchevents li')];
 
 events.forEach(li => {
-
-    const cls = li.className.toLowerCase();
-
-    const text =
-        li.innerText
-            .replace(/\\u00A0/g,' ')
-            .trim();
-
-    const minuteMatch =
-        text.match(/(\\d+)\\s*'/);
-
-    const minute =
-        minuteMatch
-            ? minuteMatch[1] + "'"
-            : '';
+    const cls = (li.className || '').toLowerCase();
+    const text = li.innerText.replace(/\\u00A0/g, ' ').trim();
+    const minute = getMinute(text);
 
     // =====================
     // GOALS
     // =====================
-
     if (cls.includes('li-maali')) {
-
-        const lines =
-            text.split('\\n')
-                .map(x => x.trim())
-                .filter(Boolean);
-
+        const lines = text.split('\\n').map(x => x.trim()).filter(Boolean);
         let player = '';
-
         lines.forEach(line => {
-
-            if (
-                /^\\d+\\s+\\S/.test(line)
-            ) {
-
-                player = line
-                    .replace(/^\\d+\\s+/, '')
-                    .trim();
-
+            if (/^\\d+\\s+\\S/.test(line)) {
+                player = line.replace(/^\\d+\\s+/, '').trim();
             }
-
         });
-
-        goals.push({
-            minute,
-            player,
-            goalType: 'Goal',
-            sort: Number(minute.replace("'",""))
-        });
-
+        if (player) {
+            goals.push({
+                minute,
+                player,
+                goalType: 'Goal',
+                sort: getSortValue(minute)
+            });
+        }
     }
 
     // =====================
     // CARDS
     // =====================
-
     if (cls.includes('li-varoitus')) {
-
-        const lines =
-            text.split('\\n')
-                .map(x => x.trim())
-                .filter(Boolean);
-
+        const lines = text.split('\\n').map(x => x.trim()).filter(Boolean);
         let player = '';
-
         lines.forEach(line => {
-
-            if (
-                /^\\d+\\s+\\S/.test(line)
-            ) {
-
-                player = line
-                    .replace(/^\\d+\\s+/, '')
-                    .trim();
-
+            if (/^\\d+\\s+\\S/.test(line)) {
+                player = line.replace(/^\\d+\\s+/, '').trim();
             }
-
         });
-
         if (player) {
-
             cards.push({
                 minute,
                 player,
                 card: 'Yellow',
-                sort: Number(minute.replace("'",""))
+                sort: getSortValue(minute)
             });
-
         }
-
     }
 
     // =====================
     // SUBSTITUTIONS
     // =====================
-
     if (cls.includes('li-vaihto')) {
-
-        const lines =
-            text.split('\\n')
-                .map(x => x.trim())
-                .filter(Boolean);
-
-        const players =
-            lines.filter(x =>
-                /^\\d+\\s+\\S/.test(x)
-            );
-
+        const lines = text.split('\\n').map(x => x.trim()).filter(Boolean);
+        const players = lines.filter(line => /^\\d+\\s+\\S/.test(line));
         if (players.length >= 2) {
-
             substitutions.push({
-
                 minute,
-
-                playerIn:
-                    players[0]
-                        .replace(/^\\d+\\s+/,'')
-                        .trim(),
-
-                playerOut:
-                    players[1]
-                        .replace(/^\\d+\\s+/,'')
-                        .trim(),
-
-                sort:
-                    Number(minute.replace("'",""))
-
+                playerIn: players[0].replace(/^\\d+\\s+/, '').trim(),
+                playerOut: players[1].replace(/^\\d+\\s+/, '').trim(),
+                sort: getSortValue(minute)
             });
-
         }
-
     }
-
 });
 
 // =====================
-// SORT
+// SORT EVENTS
 // =====================
-
-goals.sort((a,b)=>a.sort-b.sort);
-cards.sort((a,b)=>a.sort-b.sort);
-substitutions.sort((a,b)=>a.sort-b.sort);
+goals.sort((a, b) => a.sort - b.sort);
+cards.sort((a, b) => a.sort - b.sort);
+substitutions.sort((a, b) => a.sort - b.sort);
 
 // =====================
 // OUTPUT
 // =====================
-
 let output = '';
 
 output += 'Goals\\n';
 output += 'Minute\\tPlayer\\tGoal Type\\n';
-
 goals.forEach(g => {
-
-    output +=
-\`\${g.minute}\\t\${g.player}\\t\${g.goalType}\\n\`;
-
+    output += \`\${g.minute}\\t\${g.player}\\t\${g.goalType}\\n\`;
 });
 
 output += '\\n';
 
 output += 'Cards\\n';
 output += 'Minute\\tPlayer\\tCard\\n';
-
 cards.forEach(c => {
-
-    output +=
-\`\${c.minute}\\t\${c.player}\\t\${c.card}\\n\`;
-
+    output += \`\${c.minute}\\t\${c.player}\\t\${c.card}\\n\`;
 });
 
 output += '\\n';
 
 output += 'Substitutions\\n';
 output += 'Minute\\tPlayer Out\\tPlayer In\\n';
-
 substitutions.forEach(s => {
-
-    output +=
-\`\${s.minute}\\t\${s.playerOut}\\t\${s.playerIn}\\n\`;
-
+    output += \`\${s.minute}\\t\${s.playerOut}\\t\${s.playerIn}\\n\`;
 });
 
 console.clear();
 console.log(output);
 copy(output);
+console.log('✅ Goals + Cards + Substitutions copied');
 
 })();`;
 
@@ -575,7 +503,6 @@ function cleanPlayer(text) {
 }
 
 function parseLineup(table) {
-
     const starters = [];
     const rows = [...table.rows].map(r => ({
         shirt: r.cells[0]?.innerText.trim() || '',
@@ -584,22 +511,17 @@ function parseLineup(table) {
     }));
 
     for (let i = 0; i < rows.length; i++) {
-
         const row = rows[i];
         const next = rows[i + 1];
 
-        // Normal starter
         if (row.shirt && !row.minute) {
-
             starters.push({
                 shirt: Number(row.shirt),
                 player: cleanPlayer(row.player)
             });
-
             continue;
         }
 
-        // Substitution pair
         if (
             row.shirt &&
             row.minute &&
@@ -607,16 +529,12 @@ function parseLineup(table) {
             !next.shirt &&
             next.minute === row.minute
         ) {
-
             const m = next.player.match(/^(\\d+)\\s+(.+)$/);
-
             if (m) {
-
                 starters.push({
                     shirt: Number(m[1]),
                     player: cleanPlayer(m[2])
                 });
-
             }
         }
     }
@@ -628,9 +546,7 @@ function parseLineup(table) {
 }
 
 function parseBench(table) {
-
     const bench = [];
-
     const rows = [...table.rows].map(r => ({
         shirt: r.cells[0]?.innerText.trim() || '',
         player: r.cells[1]?.innerText.trim() || '',
@@ -638,30 +554,21 @@ function parseBench(table) {
     }));
 
     rows.forEach(row => {
-
-        // Bench player with shirt in column 0
         if (row.shirt) {
-
             bench.push({
                 shirt: Number(row.shirt),
                 player: cleanPlayer(row.player)
             });
-
             return;
         }
 
-        // Substitute who entered
         const m = row.player.match(/^(\\d+)\\s+(.+)$/);
-
         if (m) {
-
             bench.push({
                 shirt: Number(m[1]),
                 player: cleanPlayer(m[2])
             });
-
         }
-
     });
 
     return [...new Map(
@@ -681,29 +588,16 @@ const awayBench = parseBench(tables[3]);
 let referee = '';
 
 if (tables[4]) {
-
     [...tables[4].rows].forEach(row => {
-
-        const role =
-            row.cells[0]?.innerText.trim().toLowerCase() || '';
-
-        const name =
-            row.cells[1]?.innerText.trim() || '';
-
-        if (
-            role === 'erotuomari' ||
-            role === 'referee'
-        ) {
+        const role = row.cells[0]?.innerText.trim().toLowerCase() || '';
+        const name = row.cells[1]?.innerText.trim() || '';
+        if (role === 'erotuomari' || role === 'referee') {
             referee = name;
         }
     });
 }
 
-const teams =
-    [...document.querySelectorAll('.teamname')]
-    .map(x => x.innerText.trim())
-    .filter(Boolean);
-
+const teams = [...document.querySelectorAll('.teamname')].map(x => x.innerText.trim()).filter(Boolean);
 const homeTeam = teams[0] || 'Home';
 const awayTeam = teams[1] || 'Away';
 
@@ -712,14 +606,10 @@ let output = '';
 output += \`Lineups (\${homeTeam} vs \${awayTeam})\\n\`;
 output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
 
-const maxLineups =
-    Math.max(homeLineup.length, awayLineup.length);
-
+const maxLineups = Math.max(homeLineup.length, awayLineup.length);
 for (let i = 0; i < maxLineups; i++) {
-
     const h = homeLineup[i] || {};
     const a = awayLineup[i] || {};
-
     output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
 }
 
@@ -728,14 +618,10 @@ output += '\\n';
 output += \`Bench (\${homeTeam} vs \${awayTeam})\\n\`;
 output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
 
-const maxBench =
-    Math.max(homeBench.length, awayBench.length);
-
+const maxBench = Math.max(homeBench.length, awayBench.length);
 for (let i = 0; i < maxBench; i++) {
-
     const h = homeBench[i] || {};
     const a = awayBench[i] || {};
-
     output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
 }
 
