@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finland Kakkonen</title>
+    <title>Finland Women's Play-offs 1/2</title>
     <style>
         body {
             font-family: Calibri, sans-serif;
@@ -263,7 +263,7 @@
 </head>
 <body>
 
-    <h1>Finland Kakkonen</h1>
+    <h1>Finland Women's Play-offs 1/2</h1>
 
     <!-- TOP MENU -->
     <div class="tab-menu">
@@ -503,6 +503,7 @@ function cleanPlayer(text) {
 }
 
 function parseLineup(table) {
+    if (!table) return [];
     const starters = [];
     const rows = [...table.rows].map(r => ({
         shirt: r.cells[0]?.innerText.trim() || '',
@@ -514,6 +515,7 @@ function parseLineup(table) {
         const row = rows[i];
         const next = rows[i + 1];
 
+        // normal starter
         if (row.shirt && !row.minute) {
             starters.push({
                 shirt: Number(row.shirt),
@@ -522,6 +524,7 @@ function parseLineup(table) {
             continue;
         }
 
+        // substituted starter
         if (
             row.shirt &&
             row.minute &&
@@ -545,45 +548,10 @@ function parseLineup(table) {
     .sort((a,b)=>a.shirt-b.shirt);
 }
 
-function parseBench(table) {
-    const bench = [];
-    const rows = [...table.rows].map(r => ({
-        shirt: r.cells[0]?.innerText.trim() || '',
-        player: r.cells[1]?.innerText.trim() || '',
-        minute: r.cells[2]?.innerText.trim() || ''
-    }));
-
-    rows.forEach(row => {
-        if (row.shirt) {
-            bench.push({
-                shirt: Number(row.shirt),
-                player: cleanPlayer(row.player)
-            });
-            return;
-        }
-
-        const m = row.player.match(/^(\\d+)\\s+(.+)$/);
-        if (m) {
-            bench.push({
-                shirt: Number(m[1]),
-                player: cleanPlayer(m[2])
-            });
-        }
-    });
-
-    return [...new Map(
-        bench.map(x => [x.shirt, x])
-    ).values()]
-    .sort((a,b)=>a.shirt-b.shirt);
-}
-
 const tables = [...document.querySelectorAll('table')];
 
 const homeLineup = parseLineup(tables[0]);
 const awayLineup = parseLineup(tables[1]);
-
-const homeBench = parseBench(tables[2]);
-const awayBench = parseBench(tables[3]);
 
 let referee = '';
 
@@ -607,34 +575,25 @@ output += \`Lineups (\${homeTeam} vs \${awayTeam})\\n\`;
 output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
 
 const maxLineups = Math.max(homeLineup.length, awayLineup.length);
+
 for (let i = 0; i < maxLineups; i++) {
     const h = homeLineup[i] || {};
     const a = awayLineup[i] || {};
     output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
 }
 
-output += '\\n';
+output += '\\n\\n';
 
-output += \`Bench (\${homeTeam} vs \${awayTeam})\\n\`;
-output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
-
-const maxBench = Math.max(homeBench.length, awayBench.length);
-for (let i = 0; i < maxBench; i++) {
-    const h = homeBench[i] || {};
-    const a = awayBench[i] || {};
-    output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
-}
-
-output += '\\n';
 output += 'Referees\\n';
 output += 'Role\\tName\\n';
 output += \`Referee\\t\${referee}\\n\`;
 
 console.clear();
 console.log(output);
+
 copy(output);
 
-console.log('✅ Lineups + Bench + Referee copied');
+console.log('✅ Lineups + Referee copied');
 
 })();`;
 
@@ -769,7 +728,7 @@ console.log('✅ Lineups + Bench + Referee copied');
           if (p1.surname && p2.tokens.includes(p1.surname) && p1.firstInitial && p2.tokens.some(t => t.startsWith(p1.firstInitial))) {
             return true;
           }
-          if (p2.surname && p1.tokens.includes(p2.surname) && p2.firstInitial && p1.tokens.some(t => t.startsWith(p2.firstInitial))) {
+          if (p2.surname && p1.tokens.includes(p2.surname) && p2.firstInitial && p1.tokens.some(t => t.startsWith(p1.firstInitial))) {
             return true;
           }
 
