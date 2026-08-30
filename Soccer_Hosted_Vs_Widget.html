@@ -219,51 +219,25 @@
             border-color: #1f4e78;
         }
 
-        /* Summary Card Styling */
-        .summary-card {
-            background-color: #f9fbfd;
-            border: 1px solid #b0c4de;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        /* Status Badges */
+        /* Dynamic Status Badges */
         .status-badge {
             display: inline-block;
             padding: 4px 8px;
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 8.5pt;
             border-radius: 3px;
             text-align: center;
         }
-        .status-badge.match { background-color: #28a745; color: white; }
-        .status-badge.name-diff, 
-        .status-badge.min-diff { background-color: #ffc107; color: #212529; }
-        .status-badge.missing, 
-        .status-badge.mismatch { background-color: #dc3545; color: white; }
-        
-        .summary-status-header {
-            font-size: 14pt;
-            font-weight: bold;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .badge-large {
-            padding: 4px 14px;
-            border-radius: 4px;
-            color: white;
-            font-weight: bold;
-        }
-        .badge-large.pass { background-color: #28a745; }
-        .badge-large.fail { background-color: #dc3545; }
+        .status-badge.badge-match { background-color: #28a745; color: white; }
+        .status-badge.badge-mismatch { background-color: #dc3545; color: white; }
+        .status-badge.badge-blue { background-color: #007bff; color: white; }
+        .status-badge.badge-missing { background-color: #6f42c1; color: white; }
 
-        /* Excel-Style Table Header Visual Aids */
-        .th-hosted { background-color: #d9e1f2 !important; color: #1f4e78; }
-        .th-widget { background-color: #fce4d6 !important; color: #c65911; }
-        .th-status { background-color: #e2efda !important; color: #375623; }
+        /* Dynamic Row Background Colors */
+        tr.row-match { background-color: #d4edda !important; }
+        tr.row-mismatch { background-color: #f8d7da !important; }
+        tr.row-blue { background-color: #d1ecf1 !important; }
+        tr.row-missing { background-color: #e2d9f3 !important; }
 
         /* KPI Dashboard Grid from Compare Tool */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 25px; }
@@ -379,6 +353,8 @@
                             <option value="ALL">All Statuses</option>
                             <option value="MATCH">MATCH</option>
                             <option value="MISMATCH">MISMATCH</option>
+                            <option value="PLAYER MISMATCH">PLAYER MISMATCH</option>
+                            <option value="SHIRT NUMBER MISMATCH">SHIRT NUMBER MISMATCH</option>
                             <option value="MISSING">MISSING</option>
                         </select>
                     </div>
@@ -496,7 +472,7 @@
         }
 
         // =========================================================
-        // EXACT COMPARISON ENGINE FROM COMPARE FILE (UNMODIFIED)
+        // ENHANCED COMPARISON ENGINE
         // =========================================================
         let currentTab = 'goals';
         let results = { goals: [], cards: [], subs: [], lineups: [], bench: [], refs: [] };
@@ -517,7 +493,6 @@
             .trim();
         }
 
-        // Levenshtein distance for minor spelling variations
         function levenshtein(a, b) {
           if (a.length === 0) return b.length;
           if (b.length === 0) return a.length;
@@ -540,16 +515,8 @@
           const n1 = normalizeNameCompare(name1);
           const n2 = normalizeNameCompare(name2);
 
-          if (!name1 || !name2) {
-            const res = false;
-            console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', res);
-            return res;
-          }
-
-          if (n1 === n2) {
-            console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
-            return true;
-          }
+          if (!name1 || !name2) return false;
+          if (n1 === n2) return true;
 
           const tokens1 = n1.split(/\s+/);
           const tokens2 = n2.split(/\s+/);
@@ -559,50 +526,31 @@
           const firstName2 = tokens2[0];
 
           if (surname1 === surname2) {
-              if (
-                  firstName1 &&
-                  firstName2 &&
-                  firstName1.charAt(0) === firstName2.charAt(0)
-              ) {
+              if (firstName1 && firstName2 && firstName1.charAt(0) === firstName2.charAt(0)) {
                   return true;
               }
           }
 
           if (surname1 === surname2) {
-            if (tokens1.length === 1 || tokens2.length === 1) {
-              console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
-              return true;
-            }
-            if (firstName1[0] === firstName2[0]) {
-              console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
-              return true;
-            }
+            if (tokens1.length === 1 || tokens2.length === 1) return true;
+            if (firstName1[0] === firstName2[0]) return true;
           }
 
           if (firstName1 === firstName2 && (tokens1.length === 1 || tokens2.length === 1 || surname1 === surname2)) {
-            console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
             return true;
           }
 
           const commonTokens = tokens1.filter(t => tokens2.includes(t));
           if (commonTokens.length > 0 && (commonTokens.includes(surname1) || commonTokens.includes(surname2))) {
-            console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
             return true;
           }
 
           if (surname1 && surname2 && levenshtein(surname1, surname2) <= 2 && Math.abs(surname1.length - surname2.length) <= 2) {
-            if (firstName1[0] === firstName2[0]) {
-              console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
-              return true;
-            }
+            if (firstName1[0] === firstName2[0]) return true;
           }
 
-          if (n1.includes(n2) || n2.includes(n1)) {
-            console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', true);
-            return true;
-          }
+          if (n1.includes(n2) || n2.includes(n1)) return true;
 
-          console.log('[NAME MATCH]\nHosted Name:', name1, '\nWidget Name:', name2, '\nNormalized Hosted:', n1, '\nNormalized Widget:', n2, '\nMatch Result:', false);
           return false;
         }
 
@@ -703,6 +651,7 @@
           return result;
         }
 
+        // Section 3: Goals Report Enhancement
         function compareGoals(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
@@ -713,10 +662,8 @@
               const hMin = parseInt(normalizeMinute(h.minute)) || 0;
               const wMin = parseInt(normalizeMinute(w.minute)) || 0;
               const minMatch = Math.abs(hMin - wMin) <= 1 || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
-              const teamMatch = !h.team || !w.team || comparePlayerNames(h.team, w.team);
               const playerMatch = comparePlayerNames(h.player, w.player);
-              const assistMatch = !h.assist || !w.assist || comparePlayerNames(h.assist, w.assist);
-              return minMatch && teamMatch && playerMatch && assistMatch;
+              return minMatch || playerMatch;
             });
             
             if (matchIndex !== -1) {
@@ -726,17 +673,40 @@
               const wMin = parseInt(normalizeMinute(w.minute)) || 0;
               const minExact = hMin === wMin || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
               const playerMatch = comparePlayerNames(h.player, w.player);
+              const formatMatch = (h.type || 'Goal').toLowerCase() === (w.type || 'Goal').toLowerCase();
 
-              results.push({
-                hosted: h,
-                widget: w,
-                status: (minExact && playerMatch) ? 'MATCH' : 'MISMATCH'
-              });
+              let issues = [];
+              if (!minExact) issues.push('Minutes Mismatch');
+              if (!playerMatch) issues.push('Player Mismatch');
+              if (!formatMatch) issues.push('Goal Format Mismatch');
+
+              if (issues.length === 0) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MATCH',
+                  description: 'Perfect Match',
+                  badgeColor: 'Green',
+                  rowColor: 'Light Green'
+                });
+              } else {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MISMATCH',
+                  description: issues.join(', '),
+                  badgeColor: 'Red',
+                  rowColor: 'Light Red'
+                });
+              }
             } else {
               results.push({
                 hosted: h,
                 widget: {},
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Official',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -746,7 +716,10 @@
               results.push({
                 hosted: {},
                 widget: w,
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Hosted',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -754,6 +727,7 @@
           return results;
         }
 
+        // Section 4: Cards Report Enhancement
         function compareCards(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
@@ -764,23 +738,50 @@
               const hMin = parseInt(normalizeMinute(h.minute)) || 0;
               const wMin = parseInt(normalizeMinute(w.minute)) || 0;
               const minMatch = Math.abs(hMin - wMin) <= 1 || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
-              const teamMatch = !h.team || !w.team || comparePlayerNames(h.team, w.team);
-              return minMatch && teamMatch && comparePlayerNames(h.player, w.player);
+              return minMatch || comparePlayerNames(h.player, w.player);
             });
 
             if (matchIndex !== -1) {
               widgetMatched.add(matchIndex);
               let w = widgetList[matchIndex];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
-              });
+              const hMin = parseInt(normalizeMinute(h.minute)) || 0;
+              const wMin = parseInt(normalizeMinute(w.minute)) || 0;
+              const minExact = hMin === wMin || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
+              const playerMatch = comparePlayerNames(h.player, w.player);
+              const cardMatch = (h.card || '').toLowerCase() === (w.card || '').toLowerCase();
+
+              let issues = [];
+              if (!minExact) issues.push('Minutes Mismatch');
+              if (!playerMatch) issues.push('Player Mismatch');
+              if (!cardMatch) issues.push('Card Type Mismatch');
+
+              if (issues.length === 0) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MATCH',
+                  description: 'Perfect Match',
+                  badgeColor: 'Green',
+                  rowColor: 'Light Green'
+                });
+              } else {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MISMATCH',
+                  description: issues.join(', '),
+                  badgeColor: 'Red',
+                  rowColor: 'Light Red'
+                });
+              }
             } else {
               results.push({
                 hosted: h,
                 widget: {},
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Official',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -790,7 +791,10 @@
               results.push({
                 hosted: {},
                 widget: w,
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Hosted',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -798,6 +802,7 @@
           return results;
         }
 
+        // Section 5: Subs Report Enhancement
         function compareSubs(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
@@ -810,13 +815,8 @@
             widgetList.forEach((w, wIdx) => {
               if (widgetMatched.has(wIdx)) return;
               const wMin = parseInt(normalizeMinute(w.minute)) || 0;
-              
-              if (Math.abs(hMin - wMin) > 1) return;
-
-              const teamMatch = !h.team || !w.team || comparePlayerNames(h.team, w.team);
-              if (!teamMatch) return;
-
               let score = 0;
+              if (Math.abs(hMin - wMin) <= 1) score += 1;
               if (comparePlayerNames(h.out, w.out)) score += 2;
               if (comparePlayerNames(h.in, w.in)) score += 2;
 
@@ -829,20 +829,44 @@
             if (bestMatchIdx !== -1 && bestScore > 0) {
               widgetMatched.add(bestMatchIdx);
               let w = widgetList[bestMatchIdx];
-              const exactMin = Math.abs((parseInt(normalizeMinute(h.minute)) || 0) - (parseInt(normalizeMinute(w.minute)) || 0)) === 0;
+              const hMinVal = parseInt(normalizeMinute(h.minute)) || 0;
+              const wMinVal = parseInt(normalizeMinute(w.minute)) || 0;
+              const exactMin = Math.abs(hMinVal - wMinVal) === 0;
               const outMatch = comparePlayerNames(h.out, w.out);
               const inMatch = comparePlayerNames(h.in, w.in);
 
-              results.push({
-                hosted: h,
-                widget: w,
-                status: (exactMin && outMatch && inMatch) ? 'MATCH' : 'MISMATCH'
-              });
+              let issues = [];
+              if (!exactMin) issues.push('Minutes Mismatch');
+              if (!outMatch) issues.push('Player Out Mismatch');
+              if (!inMatch) issues.push('Player In Mismatch');
+
+              if (issues.length === 0) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MATCH',
+                  description: 'Perfect Match',
+                  badgeColor: 'Green',
+                  rowColor: 'Light Green'
+                });
+              } else {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MISMATCH',
+                  description: issues.join(', '),
+                  badgeColor: 'Red',
+                  rowColor: 'Light Red'
+                });
+              }
             } else {
               results.push({
                 hosted: h,
                 widget: {},
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Official',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -852,7 +876,10 @@
               results.push({
                 hosted: {},
                 widget: w,
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Hosted',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -860,38 +887,73 @@
           return results;
         }
 
-        function compareLineupsOrBench(hostedList, widgetList, reportType) {
+        // Section 6 & 7: Lineup and Bench Reports Enhancement
+        function compareLineupsOrBench(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
 
           hostedList.forEach(h => {
             let matchIdx = widgetList.findIndex((w, wIdx) => {
               if (widgetMatched.has(wIdx)) return false;
-              if (w.team !== h.team) return false;
-
               const shirtH = h.shirt ? String(h.shirt).trim() : '';
               const shirtW = w.shirt ? String(w.shirt).trim() : '';
-
-              if (shirtH && shirtW && shirtH === shirtW) {
-                return true;
-              }
-
+              if (shirtH && shirtW && shirtH === shirtW) return true;
               return comparePlayerNames(h.player, w.player);
             });
 
             if (matchIdx !== -1) {
               widgetMatched.add(matchIdx);
               let w = widgetList[matchIdx];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
-              });
+              const nameMatch = comparePlayerNames(h.player, w.player);
+              const shirtH = h.shirt ? String(h.shirt).trim() : '';
+              const shirtW = w.shirt ? String(w.shirt).trim() : '';
+              const shirtMatch = shirtH !== '' && shirtW !== '' && shirtH === shirtW;
+
+              if (nameMatch && shirtMatch) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MATCH',
+                  description: 'Perfect Match',
+                  badgeColor: 'Green',
+                  rowColor: 'Light Green'
+                });
+              } else if (nameMatch && !shirtMatch) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'SHIRT NUMBER MISMATCH',
+                  description: 'Shirt Number Mismatch',
+                  badgeColor: 'Blue',
+                  rowColor: 'Light Blue'
+                });
+              } else if (!nameMatch && shirtMatch) {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'PLAYER MISMATCH',
+                  description: 'Player Mismatch',
+                  badgeColor: 'Blue',
+                  rowColor: 'Light Blue'
+                });
+              } else {
+                results.push({
+                  hosted: h,
+                  widget: w,
+                  status: 'MISMATCH',
+                  description: 'Player Mismatch, Shirt Number Mismatch',
+                  badgeColor: 'Red',
+                  rowColor: 'Light Red'
+                });
+              }
             } else {
               results.push({
                 hosted: h,
                 widget: {},
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Official',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -901,7 +963,10 @@
               results.push({
                 hosted: {},
                 widget: w,
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Hosted',
+                badgeColor: 'Purple',
+                rowColor: 'Light Purple'
               });
             }
           });
@@ -909,6 +974,7 @@
           return results;
         }
 
+        // Section 8: Referee Report Comparison Logic Unchanged
         function compareRefs(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
@@ -922,16 +988,25 @@
             if (matchIdx !== -1) {
               widgetMatched.add(matchIdx);
               let w = widgetList[matchIdx];
+              const nameMatch = comparePlayerNames(h.name, w.name);
+              const roleMatch = normalizeNameCompare(h.role) === normalizeNameCompare(w.role);
+
               results.push({
                 hosted: h,
                 widget: w,
-                status: 'MATCH'
+                status: (nameMatch && roleMatch) ? 'MATCH' : 'MISMATCH',
+                description: (nameMatch && roleMatch) ? 'Perfect Match' : 'Mismatch',
+                badgeColor: (nameMatch && roleMatch) ? 'Green' : 'Red',
+                rowColor: 'None'
               });
             } else {
               results.push({
                 hosted: h,
                 widget: {},
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Official',
+                badgeColor: 'Purple',
+                rowColor: 'None'
               });
             }
           });
@@ -941,7 +1016,10 @@
               results.push({
                 hosted: {},
                 widget: w,
-                status: 'MISSING'
+                status: 'MISSING',
+                description: 'Missing in Hosted',
+                badgeColor: 'Purple',
+                rowColor: 'None'
               });
             }
           });
@@ -981,8 +1059,8 @@
             goals: compareGoals(hosted.goals, widget.goals),
             cards: compareCards(hosted.cards, widget.cards),
             subs: compareSubs(hosted.subs, widget.subs),
-            lineups: compareLineupsOrBench(hosted.lineups, widget.lineups, 'Lineup'),
-            bench: compareLineupsOrBench(hosted.bench, widget.bench, 'Bench'),
+            lineups: compareLineupsOrBench(hosted.lineups, widget.lineups),
+            bench: compareLineupsOrBench(hosted.bench, widget.bench),
             refs: compareRefs(hosted.refs, widget.refs)
           };
 
@@ -1007,7 +1085,9 @@
             const items = results[cat.key] || [];
             const counts = { MATCH: 0, MISSING: 0, MISMATCH: 0 };
             items.forEach(i => {
-              if (counts[i.status] !== undefined) counts[i.status]++;
+              if (i.status === 'MATCH') counts.MATCH++;
+              else if (i.status === 'MISSING') counts.MISSING++;
+              else counts.MISMATCH++;
             });
 
             const card = document.createElement('div');
@@ -1047,15 +1127,15 @@
 
           let headers = [];
           if (currentTab === 'goals') {
-            headers = ['Status', 'Hosted Min', 'Hosted Player', 'Hosted Team', 'Widget Min', 'Widget Player', 'Widget Team'];
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Goal Format', 'Official Min', 'Official Player', 'Official Team', 'Official Goal Format', 'Description', 'Status'];
           } else if (currentTab === 'cards') {
-            headers = ['Status', 'Hosted Min', 'Hosted Player', 'Hosted Card', 'Widget Min', 'Widget Player', 'Widget Card'];
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Card', 'Official Min', 'Official Player', 'Official Team', 'Official Card', 'Description', 'Status'];
           } else if (currentTab === 'subs') {
-            headers = ['Status', 'Hosted Min', 'Hosted Team', 'Hosted Out', 'Hosted In', 'Widget Min', 'Widget Team', 'Widget Out', 'Widget In'];
+            headers = ['Hosted Min', 'Hosted Team', 'Hosted Player Out', 'Hosted Player In', 'Official Min', 'Official Team', 'Official Player Out', 'Official Player In', 'Description', 'Status'];
           } else if (currentTab === 'lineups' || currentTab === 'bench') {
-            headers = ['Status', 'Team', 'Hosted Player', 'Hosted Shirt', 'Widget Player', 'Widget Shirt'];
+            headers = ['Hosted Player', 'Hosted Shirt No.', 'Official Player', 'Official Shirt No.', 'Description', 'Status'];
           } else if (currentTab === 'refs') {
-            headers = ['Status', 'Hosted Role', 'Hosted Name', 'Widget Role', 'Widget Name'];
+            headers = ['Hosted Role', 'Hosted Name', 'Official Role', 'Official Name', 'Description', 'Status'];
           }
 
           let trHead = document.createElement('tr');
@@ -1093,27 +1173,29 @@
             let h = item.hosted || {};
             let w = item.widget || {};
 
-            let badgeClass = 'badge-match';
-            if (item.status === 'MISMATCH') badgeClass = 'badge-mismatch';
-            if (item.status === 'MISSING') badgeClass = 'badge-missing';
-
-            let statusTd = document.createElement('td');
-            statusTd.innerHTML = `<span class="badge ${badgeClass}" style="padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.status === 'MATCH' ? '#dcfce7' : item.status === 'MISMATCH' ? '#fee2e2' : '#f3e8ff'}; color: ${item.status === 'MATCH' ? '#166534' : item.status === 'MISMATCH' ? '#991b1b' : '#6b21a8'}">${item.status}</span>`;
-            tr.appendChild(statusTd);
+            // Section 2: Row Color Logic Application
+            if (item.rowColor === 'Light Green') tr.className = 'row-match';
+            else if (item.rowColor === 'Light Red') tr.className = 'row-mismatch';
+            else if (item.rowColor === 'Light Blue') tr.className = 'row-blue';
+            else if (item.rowColor === 'Light Purple') tr.className = 'row-missing';
 
             if (currentTab === 'goals') {
               tr.appendChild(tdCell(h.minute));
               tr.appendChild(tdCell(h.player));
               tr.appendChild(tdCell(h.team));
+              tr.appendChild(tdCell(h.type || 'Goal'));
               tr.appendChild(tdCell(w.minute));
               tr.appendChild(tdCell(w.player));
               tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(w.type || 'Goal'));
             } else if (currentTab === 'cards') {
               tr.appendChild(tdCell(h.minute));
               tr.appendChild(tdCell(h.player));
+              tr.appendChild(tdCell(h.team));
               tr.appendChild(tdCell(h.card));
               tr.appendChild(tdCell(w.minute));
               tr.appendChild(tdCell(w.player));
+              tr.appendChild(tdCell(w.team));
               tr.appendChild(tdCell(w.card));
             } else if (currentTab === 'subs') {
               tr.appendChild(tdCell(h.minute));
@@ -1125,7 +1207,6 @@
               tr.appendChild(tdCell(w.out));
               tr.appendChild(tdCell(w.in));
             } else if (currentTab === 'lineups' || currentTab === 'bench') {
-              tr.appendChild(tdCell(h.team || w.team));
               tr.appendChild(tdCell(h.player));
               tr.appendChild(tdCell(h.shirt));
               tr.appendChild(tdCell(w.player));
@@ -1136,6 +1217,19 @@
               tr.appendChild(tdCell(w.role));
               tr.appendChild(tdCell(w.name));
             }
+
+            // Description column
+            tr.appendChild(tdCell(item.description));
+
+            // Section 1: Far-Right Status Column & Badge Color Logic
+            let badgeClass = 'badge-match';
+            if (item.badgeColor === 'Red') badgeClass = 'badge-mismatch';
+            else if (item.badgeColor === 'Blue') badgeClass = 'badge-blue';
+            else if (item.badgeColor === 'Purple') badgeClass = 'badge-missing';
+
+            let statusTd = document.createElement('td');
+            statusTd.innerHTML = `<span class="status-badge ${badgeClass}">${item.status}</span>`;
+            tr.appendChild(statusTd);
 
             tbody.appendChild(tr);
           });
@@ -1165,7 +1259,7 @@
           let csvContent = "data:text/csv;charset=utf-8,";
           Object.keys(results).forEach(tab => {
             results[tab].forEach(item => {
-              let row = [tab, item.status, JSON.stringify(item.hosted), JSON.stringify(item.widget)];
+              let row = [tab, item.status, item.description, JSON.stringify(item.hosted), JSON.stringify(item.widget)];
               csvContent += row.join(",") + "\r\n";
             });
           });
@@ -1288,9 +1382,9 @@
                                     
                                     let scoreType = "Goal";
                                     if (html.includes("evt-icon-PG")) {
-                                        scoreType = "Penalty (PG)";
+                                        scoreType = "Penalty Goal";
                                     } else if (html.includes("evt-icon-OG")) {
-                                        scoreType = "Own Goal (OG)";
+                                        scoreType = "Own Goal";
                                     }
 
                                     goals.push({
@@ -1298,7 +1392,7 @@
                                         player: playerName,
                                         team: teamRole === "Home" ? matchData.homeTeam : matchData.awayTeam,
                                         assist: "",
-                                        score: scoreType
+                                        type: scoreType
                                     });
                                 }
                             });
@@ -1563,7 +1657,7 @@
 
             let goalsHTML = `<div class="section-header">Goals</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Assist</th><th>Score</th></tr></thead><tbody>`;
             reports.goals.forEach(g => {
-                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.score}</td></tr>`;
+                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.type || 'Goal'}</td></tr>`;
             });
             goalsHTML += `</tbody></table>`;
             htmlContent += goalsHTML;
@@ -1694,7 +1788,7 @@
                     player: player,
                     team: teamName,
                     assist: "",
-                    score: "Goal"
+                    type: "Goal"
                 });
             });
             sortByMinute(goals);
@@ -1948,7 +2042,7 @@
 
             let goalsHTML = `<div class="section-header">Goals</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Assist</th><th>Score</th></tr></thead><tbody>`;
             reports.goals.forEach(g => {
-                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.score}</td></tr>`;
+                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.type || 'Goal'}</td></tr>`;
             });
             goalsHTML += `</tbody></table>`;
             htmlContent += goalsHTML;
