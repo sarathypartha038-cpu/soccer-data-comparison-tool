@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>France National 1</title>
+    <style>
+        body {
+            font-family: Calibri, sans-serif;
+            font-size: 11pt;
+            margin: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        h1 {
+            color: #1f4e78;
+            margin-bottom: 15px;
+        }
+        
+        /* Top Navigation Tabs */
+        .tab-menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #1f4e78;
+            padding-bottom: 10px;
+            position: relative;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            font-size: 11pt;
+            font-weight: bold;
+            color: #1f4e78;
+            background-color: #e6eef8;
+            border: 1px solid #b0c4de;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-btn:hover {
+            background-color: #d0e0f0;
+        }
+        .tab-btn.active {
+            background-color: #1f4e78;
+            color: #ffffff;
+            border-color: #1f4e78;
+        }
+
+        /* Shared Component Styling */
+        .file-uploader {
+            background: #ffffff;
+            border: 2px dashed #b0c4de;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+        input[type="file"] {
+            font-size: 11pt;
+        }
+        .section-header-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            margin-bottom: 5px;
+        }
+        .section-header {
+            font-weight: bold;
+            font-size: 13pt;
+            color: #1f4e78;
+        }
+        .copy-btn {
+            background-color: #1f4e78;
+            color: #ffffff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 10pt;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #153556;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            border: 1px solid #d9d9d9;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #dce6f1;
+            font-weight: bold;
+        }
+
+        /* Row Color Schemes based on Status */
+        tr.row-match {
+            background-color: #e2f0d9 !important; /* Light Green */
+        }
+        tr.row-mismatch {
+            background-color: #fce4d6 !important; /* Light Red / Soft Coral */
+        }
+        tr.row-partial-mismatch {
+            background-color: #e6f2ff !important; /* Light Blue */
+        }
+        tr.row-missing {
+            background-color: #f2ece9 !important; /* Light Purple / Soft Lavender */
+        }
+
+        .log-panel {
+            background: #272822;
+            color: #a6e22e;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+
+        /* Toast notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 12px;
+            position: fixed;
+            z-index: 1000;
+            right: 30px;
+            bottom: 30px;
+            font-size: 11pt;
+        }
+        #toast.show {
+            visibility: visible;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein {
+            from {bottom: 0; opacity: 0;}
+            to {bottom: 30px; opacity: 1;}
+        }
+        @keyframes fadeout {
+            from {bottom: 30px; opacity: 1;}
+            to {bottom: 0; opacity: 0;}
+        }
+
+        /* Comparison Tool Styling */
+        .comparison-container {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .comparison-textarea-group {
+            margin-bottom: 15px;
+        }
+        .comparison-textarea-group label {
+            display: block;
+            font-weight: bold;
+            color: #1f4e78;
+            margin-bottom: 5px;
+            border-bottom: 1px solid #b0c4de;
+            padding-bottom: 3px;
+        }
+        .comparison-textarea-group textarea {
+            width: 100%;
+            height: 120px;
+            font-family: monospace;
+            padding: 8px;
+            border: 1px solid #b0c4de;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        .compare-action-bar {
+            text-align: center;
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .compare-btn {
+            background-color: #1f4e78;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 12pt;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .compare-btn:hover {
+            background-color: #153556;
+        }
+        
+        /* Event Navigation Sub-Tabs */
+        .event-tabs {
+            display: flex;
+            gap: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #b0c4de;
+            padding-bottom: 5px;
+            flex-wrap: wrap;
+        }
+        .event-tab-btn {
+            padding: 8px 14px;
+            font-size: 10pt;
+            font-weight: bold;
+            color: #1f4e78;
+            background-color: #f0f4f8;
+            border: 1px solid #b0c4de;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .event-tab-btn:hover {
+            background-color: #dce6f1;
+        }
+        .event-tab-btn.active {
+            background-color: #1f4e78;
+            color: #ffffff;
+            border-color: #1f4e78;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            font-weight: bold;
+            font-size: 8.5pt;
+            border-radius: 3px;
+            text-align: center;
+            min-width: 70px;
+            white-space: nowrap;
+        }
+        .status-badge.match { background-color: #28a745; color: white; }
+        .status-badge.mismatch { background-color: #dc3545; color: white; }
+        .status-badge.partial { background-color: #007bff; color: white; } /* Blue badge */
+        .status-badge.missing { background-color: #6f42c1; color: white; }
+
+        /* KPI Dashboard Grid */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 25px; }
+        .kpi-card { background: #ffffff; border: 1px solid #b0c4de; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .kpi-card .title { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
+        .kpi-badges { display: flex; gap: 4px; }
+        .kpi-badge { font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; font-weight: 700; flex: 1; text-align: center; }
+
+        /* Filter Controls */
+        .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 15px; flex-wrap: wrap; }
+        .controls { display: flex; gap: 10px; width: 100%; margin-top: 10px; }
+        .search-box { flex: 1; padding: 8px 12px; border: 1px solid #b0c4de; border-radius: 6px; font-size: 0.875rem; outline: none; }
+        .filter-select { padding: 8px 12px; border: 1px solid #b0c4de; border-radius: 6px; font-size: 0.875rem; outline: none; background: white; }
+    </style>
+</head>
+<body>
+
+    <h1>France National 1</h1>
+
+    <!-- TOP MENU -->
+    <div class="tab-menu">
+        <button id="btnCore" class="tab-btn active" onclick="showCoreParser()">Opta Core Hosted Parser</button>
+        <button id="btnCompare" class="tab-btn" onclick="showCompareParsers()">Compare</button>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast">Report copied successfully</div>
+
+    <!-- CORE PARSER SECTION -->
+    <div id="coreParserSection">
+        <div class="file-uploader">
+            <label for="coreFileInput"><strong>Select Core Match HTML File: </strong></label>
+            <input type="file" id="coreFileInput" accept=".html,.htm">
+        </div>
+
+        <div id="coreDiagnostics" class="log-panel" style="display: none;"></div>
+        <div id="coreReportContainer"></div>
+    </div>
+
+    <!-- PARSER COMPARISON SECTION -->
+    <div id="compareParserSection" style="display: none;">
+        <div class="comparison-container">
+            <div class="comparison-textarea-group">
+                <label for="coreDataInput">Opta Core Hosted Data</label>
+                <textarea id="coreDataInput" placeholder="Paste core parser output or raw text here..."></textarea>
+            </div>
+
+            <div class="comparison-textarea-group">
+                <label for="widgetDataInput">Official Data</label>
+                <textarea id="widgetDataInput" placeholder="Paste official data output or raw text here..."></textarea>
+            </div>
+
+            <div class="compare-action-bar">
+                <button class="compare-btn" onclick="compareReports()">Compare</button>
+                <button class="compare-btn" style="background-color: #64748b;" onclick="loadSampleData()">Load Sample Data</button>
+                <button class="compare-btn" style="background-color: #dc3545;" onclick="clearAll()">Clear All</button>
+                <button class="compare-btn" style="background-color: #059669;" onclick="exportCSV()">Export CSV</button>
+                <button class="compare-btn" style="background-color: #7c3aed;" onclick="copyConsoleCode()">Copy Console Code</button>
+            </div>
+
+            <!-- Diagnostics Panel -->
+            <div class="log-panel" id="diagnosticsPanel">
+                <h3>Parser Diagnostics Panel</h3>
+                <div class="diag-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Goals:</span><span class="diag-value" id="diagHostedGoals" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Goals:</span><span class="diag-value" id="diagWidgetGoals" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Cards:</span><span class="diag-value" id="diagHostedCards" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Cards:</span><span class="diag-value" id="diagWidgetCards" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Subs:</span><span class="diag-value" id="diagHostedSubs" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Subs:</span><span class="diag-value" id="diagWidgetSubs" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Lineups:</span><span class="diag-value" id="diagHostedLineups" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Lineups:</span><span class="diag-value" id="diagWidgetLineups" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Bench:</span><span class="diag-value" id="diagHostedBench" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Bench:</span><span class="diag-value" id="diagWidgetBench" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Hosted Refs:</span><span class="diag-value" id="diagHostedRefs" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                    <div class="diag-item" style="display: flex; justify-content: space-between; background: #1e293b; padding: 8px 12px; border-radius: 4px; border: 1px solid #334155;"><span class="diag-label" style="color: #94a3b8;">Official Refs:</span><span class="diag-value" id="diagWidgetRefs" style="font-weight: bold; color: #38bdf8;">0</span></div>
+                </div>
+            </div>
+
+            <!-- Dashboard Output Area -->
+            <div id="comparisonDashboard">
+                <div class="dashboard-grid" id="kpiDashboard"></div>
+
+                <div class="filter-bar">
+                    <div class="event-tabs" id="tabContainer" style="border:none; margin:0;">
+                        <button class="event-tab-btn active" data-tab="goals" onclick="switchTab('goals', this)">Goals Report</button>
+                        <button class="event-tab-btn" data-tab="cards" onclick="switchTab('cards', this)">Cards Report</button>
+                        <button class="event-tab-btn" data-tab="subs" onclick="switchTab('subs', this)">Subs Report</button>
+                        <button class="event-tab-btn" data-tab="lineups" onclick="switchTab('lineups', this)">Lineup Report</button>
+                        <button class="event-tab-btn" data-tab="bench" onclick="switchTab('bench', this)">Bench Report</button>
+                        <button class="event-tab-btn" data-tab="refs" onclick="switchTab('refs', this)">Ref Report</button>
+                    </div>
+                    <div class="controls">
+                        <input type="text" id="searchInput" class="search-box" placeholder="Search report details..." oninput="renderCurrentTab()">
+                        <select id="statusFilter" class="filter-select" onchange="renderCurrentTab()">
+                            <option value="ALL">All Statuses</option>
+                            <option value="MATCH">MATCH</option>
+                            <option value="SHIRT NUMBER MISMATCH">SHIRT NUMBER MISMATCH</option>
+                            <option value="PLAYER MISMATCH">PLAYER MISMATCH</option>
+                            <option value="MISMATCH">MISMATCH</option>
+                            <option value="MISSING">MISSING</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="reportTable">
+                        <thead id="tableHead"></thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONSOLE_CODE = `(() => {
+
+// =====================================
+// CLEAN PLAYER
+// =====================================
+
+function cleanPlayer(text) {
+    return (text || '')
+        .replace(/\\s*\\|\\s*MV/gi, '')
+        .replace(/\\s*\\|\\s*C/gi, '')
+        .replace(/\\bMV\\b/gi, '')
+        .replace(/\\bC\\b/gi, '')
+        .replace(/\\s+/g, ' ')
+        .trim();
+}
+
+// =====================================
+// LINEUPS
+// =====================================
+
+function parseLineup(table) {
+
+    if (!table) return [];
+
+    const players = [];
+
+    [...table.rows].forEach(row => {
+
+        const shirt =
+            row.cells[0]?.innerText.trim() || '';
+
+        const player =
+            cleanPlayer(
+                row.cells[1]?.innerText.trim() || ''
+            );
+
+        if (!shirt || !player) return;
+
+        players.push({
+            shirt: Number(shirt),
+            player
+        });
+
+    });
+
+    return players.sort(
+        (a,b) => a.shirt - b.shirt
+    );
+
+}
+
+// =====================================
+// BENCH
+// =====================================
+
+function parseBench(table) {
+
+    if (!table) return [];
+
+    const players = [];
+
+    [...table.rows].forEach(row => {
+
+        const shirt =
+            row.cells[0]?.innerText.trim() || '';
+
+        const player =
+            cleanPlayer(
+                row.cells[1]?.innerText.trim() || ''
+            );
+
+        if (!shirt || !player) return;
+
+        players.push({
+            shirt: Number(shirt),
+            player
+        });
+
+    });
+
+    return players.sort(
+        (a,b) => a.shirt - b.shirt
+    );
+
+}
+
+// =====================================
+// TEAM NAMES
+// =====================================
+
+const teams =
+    [...document.querySelectorAll('.teamname')]
+        .map(x => x.innerText.trim())
+        .filter(Boolean);
+
+const homeTeam = teams[0] || 'Home';
+const awayTeam = teams[1] || 'Away';
+
+// =====================================
+// TABLES
+// =====================================
+
+const tables =
+    [...document.querySelectorAll('table')];
+
+const homeLineup = parseLineup(tables[0]);
+const homeBench  = parseBench(tables[1]);
+
+const awayLineup = parseLineup(tables[2]);
+const awayBench  = parseBench(tables[3]);
+
+// =====================================
+// REFEREES
+// =====================================
+
+let referee = '';
+let assistant1 = '';
+let assistant2 = '';
+
+const officialBlock =
+    document.querySelector('.officiel-container');
+
+if (officialBlock) {
+
+    const text =
+        officialBlock.innerText.replace(/\\r/g,'');
+
+    referee =
+        text.match(
+            /Arbitre centre\\s*:\\s*([\\s\\S]*?)Arbitre assistant 1/i
+        )?.[1]?.trim() || '';
+
+    assistant1 =
+        text.match(
+            /Arbitre assistant 1\\s*:\\s*([\\s\\S]*?)Arbitre assistant 2/i
+        )?.[1]?.trim() || '';
+
+    assistant2 =
+        text.match(
+            /Arbitre assistant 2\\s*:\\s*([\\s\\S]*?)(Délégué|$)/i
+        )?.[1]?.trim() || '';
+
+}
+
+// =====================================
+// EVENTS
+// =====================================
+
+const goals = [];
+const cards = [];
+const substitutions = [];
+
+[...document.querySelectorAll('app-moment-fort')]
+.forEach(event => {
+
+    const text =
+        event.innerText.trim();
+
+    const minute =
+        (
+            text.match(
+                /^(\\d+(?:\\+\\d+)?)['’]/
+            )?.[1] || ''
+        ) + "'";
+
+    const sort =
+        parseInt(
+            minute.split('+')[0]
+        ) || 0;
+
+    // GOALS
+
+    if (/But pour/i.test(text)) {
+
+        const lines =
+            text.split('\\n')
+                .map(x => x.trim())
+                .filter(Boolean);
+
+        goals.push({
+            minute,
+            player: lines[lines.length - 1],
+            goalType: 'Goal',
+            sort
+        });
+
+    }
+
+    // CARDS
+
+    if (/Avertissement/i.test(text)) {
+
+        const lines =
+            text.split('\\n')
+                .map(x => x.trim())
+                .filter(Boolean);
+
+        const idx =
+            lines.findIndex(x =>
+                /est averti/i.test(x)
+            );
+
+        if (idx > 0) {
+
+            cards.push({
+                minute,
+                player: lines[idx - 1],
+                card: 'Yellow',
+                sort
+            });
+
+        }
+
+    }
+
+    // SUBSTITUTIONS
+
+    if (/Changement pour/i.test(text)) {
+
+        const lines =
+            text.split('\\n')
+                .map(x => x.trim())
+                .filter(Boolean);
+
+        const idx =
+            lines.findIndex(x =>
+                /remplace/i.test(x)
+            );
+
+        if (idx > 1) {
+
+            substitutions.push({
+
+                minute,
+
+                playerIn:
+                    lines[idx - 1],
+
+                playerOut:
+                    lines[idx + 1],
+
+                sort
+
+            });
+
+        }
+
+    }
+
+});
+
+// =====================================
+// SORT EVENTS
+// =====================================
+
+goals.sort((a,b)=>a.sort-b.sort);
+cards.sort((a,b)=>a.sort-b.sort);
+substitutions.sort((a,b)=>a.sort-b.sort);
+
+// =====================================
+// OUTPUT
+// =====================================
+
+let output = '';
+
+// GOALS
+
+output += 'Goals\\n';
+output += 'Minute\\tPlayer\\tGoal Type\\n';
+
+goals.forEach(g => {
+    output += \`\${g.minute}\\t\${g.player}\\t\${g.goalType}\\n\`;
+});
+
+output += '\\n\\n';
+
+// CARDS
+
+output += 'Cards\\n';
+output += 'Minute\\tPlayer\\tCard\\n';
+
+cards.forEach(c => {
+    output += \`\${c.minute}\\t\${c.player}\\t\${c.card}\\n\`;
+});
+
+output += '\\n\\n';
+
+// SUBSTITUTIONS
+
+output += 'Substitutions\\n';
+output += 'Minute\\tPlayer Out\\tPlayer In\\n';
+
+substitutions.forEach(s => {
+    output += \`\${s.minute}\\t\${s.playerOut}\\t\${s.playerIn}\\n\`;
+});
+
+output += '\\n\\n';
+
+// LINEUPS
+
+output += \`Lineups (\${homeTeam} vs \${awayTeam})\\n\`;
+output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
+
+const maxLineups =
+    Math.max(homeLineup.length, awayLineup.length);
+
+for (let i = 0; i < maxLineups; i++) {
+
+    const h = homeLineup[i] || {};
+    const a = awayLineup[i] || {};
+
+    output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
+}
+
+output += '\\n\\n';
+
+// BENCH
+
+if (homeBench.length > 0 || awayBench.length > 0) {
+    output += \`Bench (\${homeTeam} vs \${awayTeam})\\n\`;
+    output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
+
+    const maxBench =
+        Math.max(homeBench.length, awayBench.length);
+
+    for (let i = 0; i < maxBench; i++) {
+
+        const h = homeBench[i] || {};
+        const a = awayBench[i] || {};
+
+        output += \`\${h.player || ''}\\t\${h.shirt || ''}\\t\${a.player || ''}\\t\${a.shirt || ''}\\n\`;
+    }
+
+    output += '\\n\\n';
+}
+
+// REFEREES
+
+output += 'Referees\\n';
+output += 'Role\\tName\\n';
+
+output += \`Referee\\t\${referee}\\n\`;
+output += \`Assistant Referee 1\\t\${assistant1}\\n\`;
+output += \`Assistant Referee 2\\t\${assistant2}\\n\`;
+console.clear();
+console.log(output);
+
+copy(output);
+
+console.log(
+'✅ France Full Match Data Copied'
+);
+
+})();`;
+
+        function copyConsoleCode() {
+            navigator.clipboard.writeText(CONSOLE_CODE).then(() => { showToast(); });
+        }
+
+        function normalizeName(text) {
+            if (!text) return "";
+            return text
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/đ/g, "d").replace(/Đ/g, "D")
+                .replace(/ž/g, "z").replace(/Ž/g, "Z")
+                .replace(/č/g, "c").replace(/Č/g, "C")
+                .replace(/ć/g, "c").replace(/Ć/g, "C")
+                .replace(/š/g, "s").replace(/Š/g, "S")
+                .trim();
+        }
+
+        function showCoreParser() {
+            document.getElementById("coreParserSection").style.display = "block";
+            document.getElementById("compareParserSection").style.display = "none";
+            document.getElementById("btnCore").classList.add("active");
+            document.getElementById("btnCompare").classList.remove("active");
+        }
+
+        function showCompareParsers() {
+            document.getElementById("coreParserSection").style.display = "none";
+            document.getElementById("compareParserSection").style.display = "block";
+            document.getElementById("btnCompare").classList.add("active");
+            document.getElementById("btnCore").classList.remove("active");
+        }
+
+        function copyReportOutput(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            let outputLines = [];
+            const childElements = container.children;
+            Array.from(childElements).forEach(el => {
+                if (el.classList.contains('section-header-wrapper') || el.classList.contains('section-header')) {
+                    const titleText = el.querySelector('.section-header') ? el.querySelector('.section-header').textContent : el.textContent;
+                    outputLines.push(titleText.trim());
+                } else if (el.tagName.toLowerCase() === 'table') {
+                    const rows = el.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        const cols = row.querySelectorAll('th, td');
+                        const rowData = Array.from(cols).map(c => c.textContent.trim());
+                        outputLines.push(rowData.join('\t'));
+                    });
+                    outputLines.push('');
+                }
+            });
+
+            navigator.clipboard.writeText(outputLines.join('\n').trim()).then(() => { showToast(); });
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        let currentTab = 'goals';
+        let results = { goals: [], cards: [], subs: [], lineups: [], bench: [], refs: [] };
+
+        function normalizeMinute(minStr) {
+          if (!minStr) return '';
+          let cleaned = String(minStr).replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
+          cleaned = cleaned.replace(/'/g, '').trim();
+          return cleaned;
+        }
+
+        function normalizeNameUniversal(nameStr) {
+          if (!nameStr) return '';
+          let cleaned = nameStr
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d").replace(/Đ/g, "D")
+            .replace(/ž/g, "z").replace(/Ž/g, "Z")
+            .replace(/č/g, "c").replace(/Č/g, "C")
+            .replace(/ć/g, "c").replace(/Ć/g, "C")
+            .replace(/š/g, "s").replace(/Š/g, "S")
+            .replace(/\./g, "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim();
+          return cleaned;
+        }
+
+        function extractNameParts(nameStr) {
+          const norm = normalizeNameUniversal(nameStr);
+          if (!norm) return { tokens: [], surname: '', firstInitial: '', fullName: norm };
+          const tokens = norm.split(' ');
+          let surname = '';
+          let firstInitial = '';
+          
+          if (tokens.length === 1) {
+            surname = tokens[0];
+          } else {
+            if (tokens[0].length === 1) {
+              firstInitial = tokens[0];
+              surname = tokens.slice(1).join(' ');
+            } else if (tokens[tokens.length - 1].length === 1) {
+              firstInitial = tokens[tokens.length - 1];
+              surname = tokens.slice(0, tokens.length - 1).join(' ');
+            } else {
+              surname = tokens[0];
+              firstInitial = tokens[1].charAt(0);
+            }
+          }
+          return { tokens, surname, firstInitial, fullName: norm };
+        }
+
+        function comparePlayerNames(name1, name2) {
+          if (!name1 || !name2) return false;
+          const p1 = extractNameParts(name1);
+          const p2 = extractNameParts(name2);
+
+          if (p1.fullName === p2.fullName) return true;
+
+          if (p1.surname && p2.surname && p1.surname === p2.surname) {
+            if (p1.firstInitial && p2.firstInitial && p1.firstInitial === p2.firstInitial) {
+              return true;
+            }
+          }
+
+          if (p1.surname && p2.tokens.includes(p1.surname) && p1.firstInitial && p2.tokens.some(t => t.startsWith(p1.firstInitial))) {
+            return true;
+          }
+          if (p2.surname && p1.tokens.includes(p2.surname) && p2.firstInitial && p1.tokens.some(t => t.startsWith(p2.firstInitial))) {
+            return true;
+          }
+
+          if (p1.surname && p2.surname && (p1.surname === p2.surname)) {
+            return true;
+          }
+
+          return false;
+        }
+
+        function isHeaderRow(rowValues) {
+          const joined = rowValues.join(' ').toLowerCase().trim();
+          if (!joined) return true;
+
+          const exactHeaders = [
+            'role name',
+            'minute player score',
+            'minute player goal format',
+            'minute player team assist score',
+            'minute player team assist format',
+            'minute player card',
+            'minute team player out player in',
+            'minute player out player in',
+            'shirt no. (h)',
+            'shirt no. (a)',
+            'player shirt no.'
+          ];
+
+          if (exactHeaders.includes(joined)) return true;
+
+          const firstCol = rowValues[0].toLowerCase().trim();
+          const secondCol = rowValues[1] ? rowValues[1].toLowerCase().trim() : '';
+
+          if (firstCol === 'minute' && secondCol === 'player') return true;
+          if (firstCol === 'role' && secondCol === 'name') return true;
+          if (secondCol.includes('shirt no')) return true;
+
+          return rowValues.length === 2 && firstCol === 'role' && secondCol === 'name';
+        }
+
+        function parseRow(line) {
+          if (line.includes('\t')) {
+            return line.split('\t').map(v => v.trim());
+          }
+          return line.split(/\s{2,}/).map(v => v.trim()).filter(Boolean);
+        }
+
+        function parseOptaText(text) {
+          const result = { 
+            goals: [], 
+            cards: [], 
+            subs: [], 
+            lineups: [], 
+            bench: [],   
+            refs: [] 
+          };
+          if (!text || !text.trim()) return result;
+
+          const lines = text.split('\n');
+          let currentSection = null;
+
+          for (let line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            const lower = trimmed.toLowerCase();
+            if (/^goals/i.test(lower)) { currentSection = 'goals'; continue; }
+            if (/^cards/i.test(lower)) { currentSection = 'cards'; continue; }
+            if (/^substitutions/i.test(lower)) { currentSection = 'subs'; continue; }
+            if (/^lineups/i.test(lower)) { currentSection = 'lineups'; continue; }
+            if (/^substitutes|bench|bench list/i.test(lower)) { currentSection = 'bench'; continue; }
+            if (/^referees/i.test(lower)) { currentSection = 'refs'; continue; }
+            if (/^match:/i.test(lower)) { continue; }
+
+            const row = parseRow(trimmed);
+            if (row.length === 0) continue;
+            if (isHeaderRow(row)) continue;
+
+            switch (currentSection) {
+              case 'goals':
+                if (row.length >= 2) {
+                  result.goals.push({ minute: row[0], player: row[1], team: row[2] || '', assist: row[3] || '', format: row[4] || row[3] || 'Goal' });
+                }
+                break;
+              case 'cards':
+                if (row.length >= 2) {
+                  result.cards.push({ minute: row[0], player: row[1], team: row[2] || '', card: row[3] || 'Yellow' });
+                }
+                break;
+              case 'subs':
+                if (row.length >= 2) {
+                  if (row.length === 2) {
+                    result.subs.push({ minute: row[0], team: '', out: row[1], in: row[1] });
+                  } else if (row.length === 3) {
+                    result.subs.push({ minute: row[0], team: '', out: row[1], in: row[2] });
+                  } else if (row.length >= 4) {
+                    result.subs.push({ minute: row[0], team: row[1], out: row[2], in: row[3] });
+                  }
+                }
+                break;
+              case 'lineups':
+                if (row.length >= 2) {
+                  if (row.length >= 4) {
+                    result.lineups.push({ team: 'Home', player: row[0], shirt: row[1] });
+                    result.lineups.push({ team: 'Away', player: row[2], shirt: row[3] });
+                  } else {
+                    result.lineups.push({ team: 'Home', player: row[0], shirt: row[1] || '' });
+                  }
+                }
+                break;
+              case 'bench':
+                if (row.length >= 2) {
+                  if (row.length >= 4) {
+                    result.bench.push({ team: 'Home', player: row[0], shirt: row[1] });
+                    result.bench.push({ team: 'Away', player: row[2], shirt: row[3] });
+                  } else {
+                    result.bench.push({ team: 'Home', player: row[0], shirt: row[1] || '' });
+                  }
+                }
+                break;
+              case 'refs':
+                if (row.length >= 1) {
+                  let role = row.length > 1 ? row[0].trim() : 'Referee';
+                  const name = row.length > 1 ? row.slice(1).join(' ').trim() : row[0].trim();
+                  if (/^assistants?$/i.test(role)) {
+                    role = 'Assistant Referee';
+                  }
+                  result.refs.push({ role: role, name: name });
+                }
+                break;
+            }
+          }
+          return result;
+        }
+
+        function compareGoals(hostedList, widgetList) {
+          let results = [];
+          let widgetMatched = new Set();
+
+          hostedList.forEach(h => {
+            const hMin = normalizeMinute(h.minute);
+
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
+              }
+            });
+
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+              let score = comparePlayerNames(h.player, w.player) ? 1 : 0;
+
+              const hFmt = (h.format || '').toLowerCase();
+              const wFmt = (w.format || '').toLowerCase();
+              if (hFmt === wFmt || (hFmt.includes('goal') && wFmt.includes('goal') && !hFmt.includes('penalty') && !wFmt.includes('penalty') && !hFmt.includes('own') && !wFmt.includes('own'))) {
+                score += 0.5;
+              }
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMatchIdx = idx;
+              }
+            });
+
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  let score = comparePlayerNames(h.player, w.player) ? 1 : 0;
+                  if (score > 0 && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
+              });
+            }
+
+            if (bestMatchIdx !== -1) {
+              widgetMatched.add(bestMatchIdx);
+              let w = widgetList[bestMatchIdx];
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.player, w.player)) mismatches.push('Player Mismatch');
+              
+              const hFmt = (h.format || '').toLowerCase();
+              const wFmt = (w.format || '').toLowerCase();
+              if (hFmt !== wFmt && !(hFmt.includes('goal') && wFmt.includes('goal') && !hFmt.includes('penalty') && !wFmt.includes('penalty') && !hFmt.includes('own') && !wFmt.includes('own'))) {
+                  mismatches.push('Goal Format Mismatch');
+              }
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, idx) => {
+            if (!widgetMatched.has(idx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
+
+        function compareCards(hostedList, widgetList) {
+          let results = [];
+          let widgetMatched = new Set();
+
+          hostedList.forEach(h => {
+            const hMin = normalizeMinute(h.minute);
+
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
+              }
+            });
+
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+              let score = comparePlayerNames(h.player, w.player) ? 1 : 0;
+              if (normalizeNameUniversal(h.card) === normalizeNameUniversal(w.card)) score += 0.5;
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMatchIdx = idx;
+              }
+            });
+
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  let score = comparePlayerNames(h.player, w.player) ? 1 : 0;
+                  if (score > 0 && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
+              });
+            }
+
+            if (bestMatchIdx !== -1) {
+              widgetMatched.add(bestMatchIdx);
+              let w = widgetList[bestMatchIdx];
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.player, w.player)) mismatches.push('Player Mismatch');
+              if (normalizeNameUniversal(h.card) !== normalizeNameUniversal(w.card)) mismatches.push('Card Type Mismatch');
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, idx) => {
+            if (!widgetMatched.has(idx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
+
+        function compareSubs(hostedList, widgetList) {
+          let results = [];
+          let widgetMatched = new Set();
+
+          hostedList.forEach(h => {
+            const hMin = normalizeMinute(h.minute);
+
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
+              }
+            });
+
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+
+              const outMatch = comparePlayerNames(h.out, w.out);
+              const inMatch = comparePlayerNames(h.in, w.in);
+
+              let combinedScore = 0;
+              if (outMatch) combinedScore += 10;
+              if (inMatch) combinedScore += 5;
+
+              if (combinedScore > bestScore && combinedScore > 0) {
+                bestScore = combinedScore;
+                bestMatchIdx = idx;
+              }
+            });
+
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  const outMatch = comparePlayerNames(h.out, w.out);
+                  const inMatch = comparePlayerNames(h.in, w.in);
+                  let score = (outMatch ? 10 : 0) + (inMatch ? 5 : 0);
+
+                  if ((outMatch || inMatch) && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
+              });
+            }
+
+            if (bestMatchIdx === -1 && candidateIndices.length > 0) {
+              bestMatchIdx = candidateIndices[0];
+            }
+
+            if (bestMatchIdx !== -1) {
+              widgetMatched.add(bestMatchIdx);
+              let w = widgetList[bestMatchIdx];
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.out, w.out)) mismatches.push('Player Out Mismatch');
+              if (!comparePlayerNames(h.in, w.in)) mismatches.push('Player In Mismatch');
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, idx) => {
+            if (!widgetMatched.has(idx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
+
+        function compareLineupsOrBench(hostedList, widgetList) {
+          let results = [];
+          let widgetMatched = new Set();
+
+          hostedList.forEach(h => {
+            let matchIdx = widgetList.findIndex((w, wIdx) => {
+              if (widgetMatched.has(wIdx)) return false;
+              return comparePlayerNames(h.player, w.player);
+            });
+
+            if (matchIdx === -1) {
+              const shirtH = h.shirt ? String(h.shirt).trim() : '';
+              if (shirtH !== '') {
+                matchIdx = widgetList.findIndex((w, wIdx) => {
+                  if (widgetMatched.has(wIdx)) return false;
+                  const shirtW = w.shirt ? String(w.shirt).trim() : '';
+                  return shirtW !== '' && shirtH === shirtW;
+                });
+              }
+            }
+
+            if (matchIdx !== -1) {
+              widgetMatched.add(matchIdx);
+              let w = widgetList[matchIdx];
+
+              const isNameMatch = comparePlayerNames(h.player, w.player);
+              const isShirtMatch = String(h.shirt || '').trim() === String(w.shirt || '').trim();
+
+              let status = '';
+              let description = '';
+
+              if (isNameMatch && isShirtMatch) {
+                status = 'MATCH';
+                description = 'Perfect Match';
+              } else if (isNameMatch && !isShirtMatch) {
+                status = 'SHIRT NUMBER MISMATCH';
+                description = 'Shirt Number Mismatch';
+              } else if (!isNameMatch && isShirtMatch) {
+                status = 'PLAYER MISMATCH';
+                description = 'Player Mismatch';
+              } else {
+                status = 'MISMATCH';
+                description = 'Player Mismatch, Shirt Number Mismatch';
+              }
+
+              results.push({ hosted: h, widget: w, status, description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, wIdx) => {
+            if (!widgetMatched.has(wIdx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
+
+        function compareRefs(hostedList, widgetList) {
+          let results = [];
+          let widgetMatched = new Set();
+
+          hostedList.forEach(h => {
+            let matchIdx = widgetList.findIndex((w, wIdx) => {
+              if (widgetMatched.has(wIdx)) return false;
+              const nameMatch = comparePlayerNames(h.name, w.name);
+              const roleMatch = normalizeNameUniversal(h.role) === normalizeNameUniversal(w.role);
+              return roleMatch && nameMatch;
+            });
+
+            if (matchIdx === -1) {
+              matchIdx = widgetList.findIndex((w, wIdx) => {
+                if (widgetMatched.has(wIdx)) return false;
+                return comparePlayerNames(h.name, w.name);
+              });
+            }
+
+            if (matchIdx !== -1) {
+              widgetMatched.add(matchIdx);
+              let w = widgetList[matchIdx];
+              let mismatches = [];
+
+              if (normalizeNameUniversal(h.role) !== normalizeNameUniversal(w.role)) mismatches.push('Role Mismatch');
+              if (!comparePlayerNames(h.name, w.name)) mismatches.push('Name Mismatch');
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status: status, description: description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, wIdx) => {
+            if (!widgetMatched.has(wIdx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
+
+        function compareReports() {
+          const hostedText = document.getElementById('coreDataInput').value;
+          const widgetText = document.getElementById('widgetDataInput').value;
+
+          if (!hostedText.trim() || !widgetText.trim()) {
+            alert("Please paste both Opta Core Hosted and Official Data.");
+            return;
+          }
+
+          const hosted = parseOptaText(hostedText);
+          const widget = parseOptaText(widgetText);
+
+          document.getElementById('diagHostedGoals').innerText = hosted.goals.length;
+          document.getElementById('diagWidgetGoals').innerText = widget.goals.length;
+          document.getElementById('diagHostedCards').innerText = hosted.cards.length;
+          document.getElementById('diagWidgetCards').innerText = widget.cards.length;
+          document.getElementById('diagHostedSubs').innerText = hosted.subs.length;
+          document.getElementById('diagWidgetSubs').innerText = widget.subs.length;
+          document.getElementById('diagHostedLineups').innerText = hosted.lineups.length;
+          document.getElementById('diagWidgetLineups').innerText = widget.lineups.length;
+          document.getElementById('diagHostedBench').innerText = hosted.bench.length;
+          document.getElementById('diagWidgetBench').innerText = widget.bench.length;
+          document.getElementById('diagHostedRefs').innerText = hosted.refs.length;
+          document.getElementById('diagWidgetRefs').innerText = widget.refs.length;
+
+          results = {
+            goals: compareGoals(hosted.goals, widget.goals),
+            cards: compareCards(hosted.cards, widget.cards),
+            subs: compareSubs(hosted.subs, widget.subs),
+            lineups: compareLineupsOrBench(hosted.lineups, widget.lineups),
+            bench: compareLineupsOrBench(hosted.bench, widget.bench),
+            refs: compareRefs(hosted.refs, widget.refs)
+          };
+
+          renderDashboard();
+          renderCurrentTab();
+        }
+
+        function renderDashboard() {
+          const container = document.getElementById('kpiDashboard');
+          container.innerHTML = '';
+
+          const categories = [
+            { key: 'goals', title: 'Goals' },
+            { key: 'cards', title: 'Cards' },
+            { key: 'subs', title: 'Subs' },
+            { key: 'lineups', title: 'Lineups' },
+            { key: 'bench', title: 'Bench' },
+            { key: 'refs', title: 'Refs' }
+          ];
+
+          categories.forEach(cat => {
+            const items = results[cat.key] || [];
+            const counts = { MATCH: 0, MISSING: 0, MISMATCH: 0, PARTIAL: 0 };
+            items.forEach(i => {
+              if (i.status === 'MATCH') counts.MATCH++;
+              else if (i.status === 'MISSING') counts.MISSING++;
+              else if (i.status === 'SHIRT NUMBER MISMATCH' || i.status === 'PLAYER MISMATCH') counts.PARTIAL++;
+              else counts.MISMATCH++;
+            });
+
+            const card = document.createElement('div');
+            card.className = 'kpi-card';
+            card.innerHTML = `
+              <div class="title">${cat.title}</div>
+              <div class="kpi-badges">
+                <span class="kpi-badge" style="background:#dcfce7;color:#166534" title="MATCH">${counts.MATCH}</span>
+                <span class="kpi-badge" style="background:#e6f2ff;color:#004085" title="PARTIAL">${counts.PARTIAL}</span>
+                <span class="kpi-badge" style="background:#fee2e2;color:#991b1b" title="MISMATCH">${counts.MISMATCH}</span>
+                <span class="kpi-badge" style="background:#f3e8ff;color:#6b21a8" title="MISSING">${counts.MISSING}</span>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }
+
+        function switchTab(tabKey, btn) {
+          currentTab = tabKey;
+          document.querySelectorAll('.event-tab-btn').forEach(b => b.classList.remove('active'));
+          if (btn) {
+            btn.classList.add('active');
+          } else {
+            const targetBtn = document.querySelector(`[data-tab="${tabKey}"]`);
+            if (targetBtn) targetBtn.classList.add('active');
+          }
+          renderCurrentTab();
+        }
+
+        function renderCurrentTab() {
+          const thead = document.getElementById('tableHead');
+          const tbody = document.getElementById('tableBody');
+          const searchVal = document.getElementById('searchInput').value.toLowerCase();
+          const statusVal = document.getElementById('statusFilter').value;
+
+          thead.innerHTML = '';
+          tbody.innerHTML = '';
+
+          let headers = [];
+          if (currentTab === 'goals') {
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Goal Format', 'Official Min', 'Official Player', 'Official Team', 'Official Goal Format', 'Description', 'Status'];
+          } else if (currentTab === 'cards') {
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Card Type', 'Official Min', 'Official Player', 'Official Team', 'Official Card Type', 'Description', 'Status'];
+          } else if (currentTab === 'subs') {
+            headers = ['Hosted Min', 'Hosted Player Out', 'Hosted Player In', 'Hosted Team', 'Official Min', 'Official Player Out', 'Official Player In', 'Official Team', 'Description', 'Status'];
+          } else if (currentTab === 'lineups' || currentTab === 'bench') {
+            headers = ['Hosted Player', 'Hosted Shirt', 'Official Player', 'Official Shirt', 'Description', 'Status'];
+          } else if (currentTab === 'refs') {
+            headers = ['Hosted Role', 'Hosted Name', 'Official Role', 'Official Name', 'Description', 'Status'];
+          }
+
+          let trHead = document.createElement('tr');
+          headers.forEach(h => {
+            let th = document.createElement('th');
+            th.innerText = h;
+            trHead.appendChild(th);
+          });
+          thead.appendChild(trHead);
+
+          const items = results[currentTab] || [];
+          let filtered = items.filter(item => {
+            if (statusVal !== 'ALL' && item.status !== statusVal) return false;
+            if (searchVal) {
+              const str = JSON.stringify(item).toLowerCase();
+              if (!str.includes(searchVal)) return false;
+            }
+            return true;
+          });
+
+          if (filtered.length === 0) {
+            let tr = document.createElement('tr');
+            let td = document.createElement('td');
+            td.colSpan = headers.length;
+            td.style.textAlign = 'center';
+            td.style.color = '#64748b';
+            td.innerText = 'No records found';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+          }
+
+          filtered.forEach(item => {
+            let tr = document.createElement('tr');
+            let h = item.hosted || {};
+            let w = item.widget || {};
+
+            if (item.status === 'MATCH') {
+                tr.classList.add('row-match');
+            } else if (item.status === 'SHIRT NUMBER MISMATCH' || item.status === 'PLAYER MISMATCH') {
+                tr.classList.add('row-partial-mismatch');
+            } else if (item.status === 'MISMATCH') {
+                tr.classList.add('row-mismatch');
+            } else if (item.status === 'MISSING') {
+                tr.classList.add('row-missing');
+            }
+
+            if (currentTab === 'goals') {
+              tr.appendChild(tdCell(h.minute));
+              tr.appendChild(tdCell(h.player));
+              tr.appendChild(tdCell(h.team));
+              tr.appendChild(tdCell(h.format));
+              tr.appendChild(tdCell(w.minute));
+              tr.appendChild(tdCell(w.player));
+              tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(w.format));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
+            } else if (currentTab === 'cards') {
+              tr.appendChild(tdCell(h.minute));
+              tr.appendChild(tdCell(h.player));
+              tr.appendChild(tdCell(h.team));
+              tr.appendChild(tdCell(h.card));
+              tr.appendChild(tdCell(w.minute));
+              tr.appendChild(tdCell(w.player));
+              tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(w.card));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
+            } else if (currentTab === 'subs') {
+              tr.appendChild(tdCell(h.minute));
+              tr.appendChild(tdCell(h.out));
+              tr.appendChild(tdCell(h.in));
+              tr.appendChild(tdCell(h.team));
+              tr.appendChild(tdCell(w.minute));
+              tr.appendChild(tdCell(w.out));
+              tr.appendChild(tdCell(w.in));
+              tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
+            } else if (currentTab === 'lineups' || currentTab === 'bench') {
+              tr.appendChild(tdCell(h.player));
+              tr.appendChild(tdCell(h.shirt));
+              tr.appendChild(tdCell(w.player));
+              tr.appendChild(tdCell(w.shirt));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
+            } else if (currentTab === 'refs') {
+              tr.appendChild(tdCell(h.role));
+              tr.appendChild(tdCell(h.name));
+              tr.appendChild(tdCell(w.role));
+              tr.appendChild(tdCell(w.name));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
+            }
+
+            tbody.appendChild(tr);
+          });
+        }
+
+        function tdCell(val) {
+          let td = document.createElement('td');
+          td.innerText = (val !== undefined && val !== null && val !== '') ? val : '-';
+          return td;
+        }
+
+        function statusBadgeCell(status) {
+          let td = document.createElement('td');
+          let badgeClass = 'match';
+          
+          if (status === 'SHIRT NUMBER MISMATCH' || status === 'PLAYER MISMATCH') {
+            badgeClass = 'partial';
+          } else if (status === 'MISMATCH') {
+            badgeClass = 'mismatch';
+          } else if (status === 'MISSING') {
+            badgeClass = 'missing';
+          }
+
+          td.innerHTML = `<span class="status-badge ${badgeClass}">${status}</span>`;
+          return td;
+        }
+
+        function loadSampleData() {
+          document.getElementById('coreDataInput').value = `Goals\n39'\tH. Assehnoun\tPenafiel\t-\tGoal\n87'\tO. Haimi\tPenafiel\t-\tGoal\nCards\n34'\tI. Tiainen\tTeam A\tYellow\nSubstitutions\n65'\tK. Mehtojärvi\tI. Aksoy\nLineups\nH. Assehnoun\t10\nReferees\nMr. Referee`;
+          document.getElementById('widgetDataInput').value = `Goals\n39'\tAssehnoun Hamza\tOfficial Team Name\t-\tGoal\n88'\tHaimi Otto\tOfficial Team Name\t-\tGoal\nCards\n34'\tTiainen Ilmari\tTeam B\tYellow\nSubstitutions\n65'\tMehtojärvi Kasper\tAksoy Ibrahim\nLineups\nAssehnoun Hamza\t7\nReferees\nMr. Referee`;
+          compareReports();
+        }
+
+        function clearAll() {
+          document.getElementById('coreDataInput').value = '';
+          document.getElementById('widgetDataInput').value = '';
+          results = { goals: [], cards: [], subs: [], lineups: [], bench: [], refs: [] };
+          renderDashboard();
+          renderCurrentTab();
+        }
+
+        function exportCSV() {
+          let csvContent = "data:text/csv;charset=utf-8,";
+          Object.keys(results).forEach(tab => {
+            results[tab].forEach(item => {
+              let row = [tab, item.status, item.description || '', JSON.stringify(item.hosted), JSON.stringify(item.widget)];
+              csvContent += row.join(",") + "\r\n";
+            });
+          });
+          let encodedUri = encodeURI(csvContent);
+          let link = document.createElement("a");
+          link.setAttribute("href", encodedUri);
+          link.setAttribute("download", "opta_comparison_report.csv");
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+
+        document.getElementById('coreFileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const htmlContent = e.target.result;
+                const reports = parseCoreHTML(htmlContent);
+                generateCoreReports(reports);
+            };
+            reader.readAsText(file);
+        });
+
+        function parseCoreHTML(htmlString) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlString, "text/html");
+
+            function cleanText(text) {
+                if (!text) return "";
+                const cleaned = text.replace(/\s+/g, " ").trim();
+                return normalizeName(cleaned);
+            }
+
+            function parseMinuteToNumber(minStr) {
+                if (!minStr) return 0;
+                let txt = minStr.replace(/'/g, "").trim();
+                if (txt.includes("+")) {
+                    const parts = txt.split("+");
+                    return (parseFloat(parts[0]) || 0) + (parseFloat(parts[1]) || 0) / 100;
+                }
+                return parseFloat(txt) || 0;
+            }
+
+            function sortByMinute(list) {
+                return list.sort((a, b) => parseMinuteToNumber(a.minute) - parseMinuteToNumber(b.minute));
+            }
+
+            let homeTeamName = "";
+            let awayTeamName = "";
+            let formattedScore = "";
+
+            const titleNode = doc.querySelector("#submenu_wrapper h1");
+
+            if (titleNode) {
+                const titleText = cleanText(titleNode.textContent);
+                const m = titleText.match(/^(.*?)\s+vs\s+(.*?)\s+(\d+\-\d+)$/i);
+
+                if (m) {
+                    homeTeamName = m[1].trim();
+                    awayTeamName = m[2].trim();
+                    formattedScore = m[3].trim();
+                }
+            }
+
+            let matchData = {
+                homeTeam: homeTeamName,
+                awayTeam: awayTeamName,
+                formattedScore: formattedScore,
+                homeScore: 0,
+                awayScore: 0
+            };
+
+            if (formattedScore) {
+                const scoreParts = formattedScore.split("-");
+                matchData.homeScore = parseInt(scoreParts[0], 10) || 0;
+                matchData.awayScore = parseInt(scoreParts[1], 10) || 0;
+            }
+
+            let matchTitle = "";
+            if (!matchData.homeTeam || !matchData.awayTeam) {
+                matchTitle = "Team Names Not Found";
+            } else {
+                matchTitle = `${matchData.homeTeam} ${matchData.formattedScore} ${matchData.awayTeam}`.trim();
+            }
+
+            const activeMatchContainer =
+                doc.querySelector("#match-center") ||
+                doc.querySelector(".match-center.active") ||
+                doc.querySelector(".match-details.active") ||
+                doc.querySelector(".match-details") ||
+                doc;
+
+            const goals = [];
+            const teamBlocks = activeMatchContainer.getElementsByClassName("team");
+
+            Array.from(teamBlocks).forEach((teamBlock) => {
+                let teamRole = "";
+                if (teamBlock.className.includes("team-a")) teamRole = "Home";
+                if (teamBlock.className.includes("team-b")) teamRole = "Away";
+                if (!teamRole) return;
+
+                const players = teamBlock.getElementsByTagName("li");
+                Array.from(players).forEach((player) => {
+                    const nameElems = player.getElementsByClassName("name");
+                    if (nameElems.length > 0) {
+                        const playerName = cleanText(nameElems[0].textContent);
+                        const matchEvents = player.getElementsByClassName("match-events");
+                        if (matchEvents.length > 0) {
+                            const events = matchEvents[0].getElementsByClassName("event");
+                            Array.from(events).forEach((evt) => {
+                                const html = evt.innerHTML;
+                                if (html.includes("evt-icon-G") || html.includes("evt-icon-PG") || html.includes("evt-icon-OG")) {
+                                    const minElem = evt.getElementsByClassName("minute")[0];
+                                    const minute = minElem ? cleanText(minElem.textContent) : "";
+                                    
+                                    let scoreType = "Goal";
+                                    if (html.includes("evt-icon-PG")) {
+                                        scoreType = "Penalty Goal";
+                                    } else if (html.includes("evt-icon-OG")) {
+                                        scoreType = "Own Goal";
+                                    }
+
+                                    goals.push({
+                                        minute: minute,
+                                        player: playerName,
+                                        team: teamRole === "Home" ? matchData.homeTeam : matchData.awayTeam,
+                                        assist: "",
+                                        format: scoreType
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+            sortByMinute(goals);
+
+            const rawCards = [];
+            Array.from(teamBlocks).forEach((teamBlock) => {
+                let teamRole = "";
+                if (teamBlock.className.includes("team-a")) teamRole = "Home";
+                if (teamBlock.className.includes("team-b")) teamRole = "Away";
+                if (!teamRole) return;
+
+                const players = teamBlock.getElementsByTagName("li");
+                Array.from(players).forEach((player) => {
+                    const nameElems = player.getElementsByClassName("name");
+                    if (nameElems.length > 0) {
+                        const playerName = cleanText(nameElems[0].textContent);
+                        const matchEvents = player.getElementsByClassName("match-events");
+                        if (matchEvents.length > 0) {
+                            const events = matchEvents[0].getElementsByClassName("event");
+                            Array.from(events).forEach((evt) => {
+                                let minuteText = "";
+                                let cardType = "";
+                                const minElem = evt.getElementsByClassName("minute")[0];
+                                if (minElem) minuteText = cleanText(minElem.textContent);
+
+                                const html = evt.innerHTML;
+                                if (html.includes("evt-icon-YC")) cardType = "Yellow";
+                                if (html.includes("evt-icon-Y2C")) cardType = "Red";
+                                if (html.includes("evt-icon-RC")) cardType = "Red";
+
+                                if (cardType !== "") {
+                                    rawCards.push({
+                                        minute: minuteText,
+                                        player: playerName,
+                                        team: teamRole === "Home" ? matchData.homeTeam : matchData.awayTeam,
+                                        card: cardType
+                                    });
+                                }
+                            });
+                        }
+                    }
+                });
+            });
+
+            const mergedCards = [];
+            const skipIndex = new Set();
+
+            for (let i = 0; i < rawCards.length; i++) {
+                let foundMerged = false;
+                for (let j = i + 1; j < rawCards.length; j++) {
+                    const a = rawCards[i];
+                    const b = rawCards[j];
+                    if (a.player === b.player && a.minute === b.minute) {
+                        if ((a.card === "Yellow" && b.card === "Red") || (a.card === "Red" && b.card === "Yellow")) {
+                            mergedCards.push({
+                                minute: a.minute,
+                                player: a.player,
+                                team: a.team,
+                                card: "Red"
+                            });
+                            skipIndex.add(j);
+                            foundMerged = true;
+                            break;
+                        }
+                    }
+                }
+                if (!foundMerged) {
+                    if (!skipIndex.has(i)) {
+                        mergedCards.push(rawCards[i]);
+                    }
+                }
+            }
+            sortByMinute(mergedCards);
+
+            const subs = [];
+            const subBlockContainer = activeMatchContainer.getElementsByClassName("block.match_substitutes")[0] || activeMatchContainer.querySelector(".block.match_substitutes");
+
+            if (subBlockContainer) {
+                const subTeams = subBlockContainer.getElementsByClassName("team");
+                Array.from(subTeams).forEach((subTeam) => {
+                    let subTeamName = "";
+                    if (subTeam.className.includes("team-a")) subTeamName = matchData.homeTeam;
+                    if (subTeam.className.includes("team-b")) subTeamName = matchData.awayTeam;
+
+                    const subItems = subTeam.getElementsByTagName("li");
+                    Array.from(subItems).forEach((subItem) => {
+                        let subIn = "";
+                        let subOut = "";
+                        let subMin = "";
+
+                        const nameElems = subItem.getElementsByClassName("name");
+                        if (nameElems.length > 0) {
+                            subIn = cleanText(nameElems[0].textContent);
+                        }
+
+                        const spElems = subItem.getElementsByClassName("substituted-player");
+                        if (spElems.length > 0) {
+                            const sp = spElems[0];
+                            let spText = sp.textContent;
+                            const minElems = sp.getElementsByClassName("minute");
+                            if (minElems.length > 0) {
+                                subMin = cleanText(minElems[0].textContent);
+                                spText = spText.replace(subMin, "");
+                            }
+                            subOut = cleanText(spText.replace(/for/g, ""));
+                        }
+
+                        if (subOut !== "" && subIn !== "") {
+                            subs.push({
+                                minute: subMin,
+                                team: subTeamName,
+                                playerOut: subOut,
+                                playerIn: subIn
+                            });
+                        }
+                    });
+                });
+            }
+            sortByMinute(subs);
+
+            const lineupBlock = activeMatchContainer.querySelector(".block.match_lineups") || activeMatchContainer;
+            const homeTeamElem = lineupBlock.querySelector(".team.team-a, .team-a");
+            const awayTeamElem = lineupBlock.querySelector(".team.team-b, .team-b");
+
+            const rawHomePlayers = homeTeamElem ? Array.from(homeTeamElem.getElementsByTagName("li")) : [];
+            const rawAwayPlayers = awayTeamElem ? Array.from(awayTeamElem.getElementsByTagName("li")) : [];
+
+            const homeStarters = [];
+            const awayStarters = [];
+
+            rawHomePlayers.forEach(p => {
+                const name = cleanText(p.getElementsByClassName("name")[0]?.textContent);
+                const shirt = cleanText(p.getElementsByClassName("shirt-number")[0]?.textContent);
+                if (name) homeStarters.push({ name, shirt });
+            });
+
+            rawAwayPlayers.forEach(p => {
+                const name = cleanText(p.getElementsByClassName("name")[0]?.textContent);
+                const shirt = cleanText(p.getElementsByClassName("shirt-number")[0]?.textContent);
+                if (name) awayStarters.push({ name, shirt });
+            });
+
+            homeStarters.sort((a, b) => (parseInt(a.shirt, 10) || 0) - (parseInt(b.shirt, 10) || 0));
+            awayStarters.sort((a, b) => (parseInt(a.shirt, 10) || 0) - (parseInt(b.shirt, 10) || 0));
+
+            const lineups = [];
+            const minStarters = Math.max(homeStarters.length, awayStarters.length);
+            for (let i = 0; i < minStarters; i++) {
+                lineups.push({
+                    homePlayer: homeStarters[i] ? homeStarters[i].name : "",
+                    shirtH: homeStarters[i] ? homeStarters[i].shirt : "",
+                    awayPlayer: awayStarters[i] ? awayStarters[i].name : "",
+                    shirtA: awayStarters[i] ? awayStarters[i].shirt : ""
+                });
+            }
+
+            const homeBench = [];
+            const awayBench = [];
+
+            if (subBlockContainer) {
+                const hSubBlock = subBlockContainer.getElementsByClassName("team team-a")[0] || subBlockContainer.querySelector(".team.team-a");
+                const aSubBlock = subBlockContainer.getElementsByClassName("team team-b")[0] || subBlockContainer.querySelector(".team.team-b");
+
+                const hSubs = hSubBlock ? hSubBlock.getElementsByTagName("li") : [];
+                const aSubs = aSubBlock ? aSubBlock.getElementsByTagName("li") : [];
+
+                Array.from(hSubs).forEach((item) => {
+                    const name = cleanText(item.getElementsByClassName("name")[0]?.textContent);
+                    const shirtElem = item.getElementsByClassName("shirt-number");
+                    const shirt = shirtElem.length > 0 ? cleanText(shirtElem[0].textContent) : "";
+                    if (name) homeBench.push({ name, shirt });
+                });
+
+                Array.from(aSubs).forEach((item) => {
+                    const name = cleanText(item.getElementsByClassName("name")[0]?.textContent);
+                    const shirtElem = item.getElementsByClassName("shirt-number");
+                    const shirt = shirtElem.length > 0 ? cleanText(shirtElem[0].textContent) : "";
+                    if (name) awayBench.push({ name, shirt });
+                });
+            }
+
+            homeBench.sort((a, b) => (parseInt(a.shirt, 10) || 0) - (parseInt(b.shirt, 10) || 0));
+            awayBench.sort((a, b) => (parseInt(a.shirt, 10) || 0) - (parseInt(b.shirt, 10) || 0));
+
+            const benchList = [];
+            const maxBenchLen = Math.max(homeBench.length, awayBench.length);
+            for (let i = 0; i < maxBenchLen; i++) {
+                benchList.push({
+                    homeSub: homeBench[i] ? homeBench[i].name : "",
+                    shirtH: homeBench[i] ? homeBench[i].shirt : "",
+                    awaySub: awayBench[i] ? awayBench[i].name : "",
+                    shirtA: awayBench[i] ? awayBench[i].shirt : ""
+                });
+            }
+
+            const referees = [];
+            const refBlockContainer = activeMatchContainer.getElementsByClassName("block.match_extra_info")[0] || activeMatchContainer.querySelector(".block.match_extra_info");
+
+            if (refBlockContainer) {
+                const refBlocks = refBlockContainer.getElementsByClassName("referee");
+                Array.from(refBlocks).forEach((refDiv) => {
+                    const dt = refDiv.getElementsByTagName("dt")[0];
+                    let role = dt ? cleanText(dt.textContent) : "";
+                    if (!role) role = "Assistant Referee";
+
+                    let refName = "";
+                    const aTag = refDiv.getElementsByTagName("a");
+                    if (aTag.length > 0) {
+                        refName = cleanText(aTag[0].textContent);
+                    } else {
+                        const ddTag = refDiv.getElementsByTagName("dd")[0];
+                        if (ddTag) refName = cleanText(ddTag.textContent);
+                    }
+
+                    if (refName) {
+                        referees.push({ role, name: refName });
+                    }
+                });
+            }
+
+            const logBox = document.getElementById("coreDiagnostics");
+            logBox.style.display = "block";
+            logBox.textContent = 
+                `Match: ${matchTitle}\n` +
+                `Goals: ${goals.length}\n` +
+                `Cards: ${mergedCards.length}\n` +
+                `Subs: ${subs.length}\n` +
+                `Home Starters: ${homeStarters.length}\n` +
+                `Away Starters: ${awayStarters.length}\n` +
+                `Home Bench: ${homeBench.length}\n` +
+                `Away Bench: ${awayBench.length}\n` +
+                `Referees: ${referees.length}`;
+
+            return {
+                matchTitle,
+                homeTeam: matchData.homeTeam,
+                awayTeam: matchData.awayTeam,
+                goals,
+                cards: mergedCards,
+                substitutions: subs,
+                lineups,
+                benchList,
+                referees
+            };
+        }
+
+        function generateCoreReports(reports) {
+            const container = document.getElementById('coreReportContainer');
+            container.innerHTML = '';
+
+            let htmlContent = '';
+            
+            htmlContent += `
+                <div class="section-header-wrapper">
+                    <div class="section-header">Match: ${reports.matchTitle}</div>
+                    <button class="copy-btn" onclick="copyReportOutput('coreReportContainer')">Copy Output</button>
+                </div>
+            `;
+
+            let goalsHTML = `<div class="section-header">Goals</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Assist</th><th>Goal Format</th></tr></thead><tbody>`;
+            reports.goals.forEach(g => {
+                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.format}</td></tr>`;
+            });
+            goalsHTML += `</tbody></table>`;
+            htmlContent += goalsHTML;
+
+            let cardsHTML = `<div class="section-header">Cards</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Card</th></tr></thead><tbody>`;
+            reports.cards.forEach(c => {
+                cardsHTML += `<tr><td>${c.minute}</td><td>${c.player}</td><td>${c.team}</td><td>${c.card}</td></tr>`;
+            });
+            cardsHTML += `</tbody></table>`;
+            htmlContent += cardsHTML;
+
+            let subsHTML = `<div class="section-header">Substitutions</div><table><thead><tr><th>Minute</th><th>Team</th><th>Player Out</th><th>Player In</th></tr></thead><tbody>`;
+            reports.substitutions.forEach(s => {
+                subsHTML += `<tr><td>${s.minute}</td><td>${s.team}</td><td>${s.playerOut}</td><td>${s.playerIn}</td></tr>`;
+            });
+            subsHTML += `</tbody></table>`;
+            htmlContent += subsHTML;
+
+            let lineupsHTML = `<div class="section-header">Lineups (${reports.homeTeam} vs ${reports.awayTeam})</div><table><thead><tr><th>${reports.homeTeam} Player</th><th>Shirt No. (H)</th><th>${reports.awayTeam} Player</th><th>Shirt No. (A)</th></tr></thead><tbody>`;
+            reports.lineups.forEach(l => {
+                lineupsHTML += `<tr><td>${l.homePlayer}</td><td>${l.shirtH}</td><td>${l.awayPlayer}</td><td>${l.shirtA}</td></tr>`;
+            });
+            lineupsHTML += `</tbody></table>`;
+            htmlContent += lineupsHTML;
+
+            let benchHTML = `<div class="section-header">Substitutes (Bench List)</div><table><thead><tr><th>${reports.homeTeam} Subs</th><th>Shirt No. (H)</th><th>${reports.awayTeam} Subs</th><th>Shirt No. (A)</th></tr></thead><tbody>`;
+            reports.benchList.forEach(b => {
+                benchHTML += `<tr><td>${b.homeSub}</td><td>${b.shirtH}</td><td>${b.awaySub}</td><td>${b.shirtA}</td></tr>`;
+            });
+            benchHTML += `</tbody></table>`;
+            htmlContent += benchHTML;
+
+            let refHTML = `<div class="section-header">Referees</div><table><thead><tr><th>Role</th><th>Name</th></tr></thead><tbody>`;
+            reports.referees.forEach(r => {
+                refHTML += `<tr><td>${r.role}</td><td>${r.name}</td></tr>`;
+            });
+            refHTML += `</tbody></table>`;
+            htmlContent += refHTML;
+
+            container.innerHTML = htmlContent;
+        }
+    </script>
+</body>
+</html>
