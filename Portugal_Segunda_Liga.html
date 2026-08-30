@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Opta Match Data Suite</title>
+    <title>Portugal Segunda Liga</title>
     <style>
         body {
             font-family: Calibri, sans-serif;
@@ -100,9 +100,21 @@
             background-color: #dce6f1;
             font-weight: bold;
         }
-        tr:nth-child(even) {
-            background-color: #f9fbfd;
+
+        /* Row Color Schemes based on Status */
+        tr.row-match {
+            background-color: #e2f0d9 !important; /* Light Green */
         }
+        tr.row-mismatch {
+            background-color: #fce4d6 !important; /* Light Red / Soft Coral */
+        }
+        tr.row-partial-mismatch {
+            background-color: #e6f2ff !important; /* Light Blue */
+        }
+        tr.row-missing {
+            background-color: #f2ece9 !important; /* Light Purple / Soft Lavender */
+        }
+
         .log-panel {
             background: #272822;
             color: #a6e22e;
@@ -219,58 +231,28 @@
             border-color: #1f4e78;
         }
 
-        /* Summary Card Styling */
-        .summary-card {
-            background-color: #f9fbfd;
-            border: 1px solid #b0c4de;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
         /* Status Badges */
         .status-badge {
             display: inline-block;
             padding: 4px 8px;
             font-weight: bold;
-            font-size: 9pt;
+            font-size: 8.5pt;
             border-radius: 3px;
             text-align: center;
+            min-width: 70px;
+            white-space: nowrap;
         }
         .status-badge.match { background-color: #28a745; color: white; }
-        .status-badge.name-diff, 
-        .status-badge.min-diff { background-color: #ffc107; color: #212529; }
-        .status-badge.missing, 
         .status-badge.mismatch { background-color: #dc3545; color: white; }
-        
-        .summary-status-header {
-            font-size: 14pt;
-            font-weight: bold;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .badge-large {
-            padding: 4px 14px;
-            border-radius: 4px;
-            color: white;
-            font-weight: bold;
-        }
-        .badge-large.pass { background-color: #28a745; }
-        .badge-large.fail { background-color: #dc3545; }
+        .status-badge.partial { background-color: #007bff; color: white; } /* Blue badge */
+        .status-badge.missing { background-color: #6f42c1; color: white; }
 
-        /* Excel-Style Table Header Visual Aids */
-        .th-hosted { background-color: #d9e1f2 !important; color: #1f4e78; }
-        .th-widget { background-color: #fce4d6 !important; color: #c65911; }
-        .th-status { background-color: #e2efda !important; color: #375623; }
-
-        /* KPI Dashboard Grid from Compare Tool */
+        /* KPI Dashboard Grid */
         .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 25px; }
         .kpi-card { background: #ffffff; border: 1px solid #b0c4de; border-radius: 8px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .kpi-card .title { font-size: 0.8rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 6px; }
-        .kpi-badges { display: flex; gap: 6px; }
-        .kpi-badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex: 1; text-align: center; }
+        .kpi-badges { display: flex; gap: 4px; }
+        .kpi-badge { font-size: 0.75rem; padding: 2px 4px; border-radius: 4px; font-weight: 700; flex: 1; text-align: center; }
 
         /* Filter Controls */
         .filter-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 15px; flex-wrap: wrap; }
@@ -281,7 +263,7 @@
 </head>
 <body>
 
-    <h1>Opta Match Data Suite</h1>
+    <h1>Portugal Segunda Liga</h1>
 
     <!-- TOP MENU -->
     <div class="tab-menu">
@@ -292,9 +274,7 @@
     <!-- TOAST NOTIFICATION -->
     <div id="toast">Report copied successfully</div>
 
-    <!-- ========================================================= -->
-    <!-- CORE PARSER SECTION                                       -->
-    <!-- ========================================================= -->
+    <!-- CORE PARSER SECTION -->
     <div id="coreParserSection">
         <div class="file-uploader">
             <label for="coreFileInput"><strong>Select Core Match HTML File: </strong></label>
@@ -305,9 +285,7 @@
         <div id="coreReportContainer"></div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- PARSER COMPARISON SECTION                                 -->
-    <!-- ========================================================= -->
+    <!-- PARSER COMPARISON SECTION -->
     <div id="compareParserSection" style="display: none;">
         <div class="comparison-container">
             <div class="comparison-textarea-group">
@@ -329,7 +307,7 @@
                 <button class="compare-btn" style="background-color: #ea580c;" onclick="copyConsoleCode2()">Copy Console Code (Lineup / Referees)</button>
             </div>
 
-            <!-- Parser Diagnostics Panel -->
+            <!-- Diagnostics Panel -->
             <div class="log-panel" id="diagnosticsPanel">
                 <h3>Parser Diagnostics Panel</h3>
                 <div class="diag-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
@@ -366,6 +344,8 @@
                         <select id="statusFilter" class="filter-select" onchange="renderCurrentTab()">
                             <option value="ALL">All Statuses</option>
                             <option value="MATCH">MATCH</option>
+                            <option value="SHIRT NUMBER MISMATCH">SHIRT NUMBER MISMATCH</option>
+                            <option value="PLAYER MISMATCH">PLAYER MISMATCH</option>
                             <option value="MISMATCH">MISMATCH</option>
                             <option value="MISSING">MISSING</option>
                         </select>
@@ -383,16 +363,12 @@
     </div>
 
     <script>
-        // Predefined Extraction Scripts for Console Code Buttons
         const CONSOLE_CODE_1 = `(() => {
-
     const timeline = document.querySelector('.match_timeline');
-
     if (!timeline) {
         console.error('Timeline not found');
         return;
     }
-
     const rows = [...timeline.querySelectorAll('.match_timeline_event')]
         .map(el => el.innerText.trim())
         .filter(Boolean);
@@ -402,303 +378,112 @@
     const substitutions = [];
 
     rows.forEach(text => {
-
-        const lines = text
-            .split('\\n')
-            .map(x => x.trim())
-            .filter(Boolean);
-
+        const lines = text.split('\\n').map(x => x.trim()).filter(Boolean);
         if (lines[0]?.startsWith('GOLO!')) {
-
-            const minuteMatch =
-                lines[0].match(/aos\\s+(\\d+(?:\\+\\d+)?')/i);
-
-            const playerMatch =
-                lines[0].match(/GOLO!\\s*[^,]+,\\s*(.*?)\\s+aos/i);
-
+            const minuteMatch = lines[0].match(/aos\\s+(\\d+(?:\\+\\d+)?')/i);
+            const playerMatch = lines[0].match(/GOLO!\\s*[^,]+,\\s*(.*?)\\s+aos/i);
             goals.push({
                 minute: minuteMatch ? minuteMatch[1] : '',
                 player: playerMatch ? playerMatch[1].trim() : '',
                 score: 'Goal'
             });
-
             return;
         }
-
-        if (
-            lines.length === 3 &&
-            /^\\d+'/.test(lines[1]) &&
-            /^\\d+-\\d+$/.test(lines[2])
-        ) {
-
-            goals.push({
-                minute: lines[1],
-                player: lines[0],
-                score: 'Goal'
-            });
-
+        if (lines.length === 3 && /^\\d+'/.test(lines[1]) && /^\\d+-\\d+$/.test(lines[2])) {
+            goals.push({ minute: lines[1], player: lines[0], score: 'Goal' });
             return;
         }
-
-        if (
-            lines.length === 2 &&
-            /^\\d+'/.test(lines[1])
-        ) {
-
-            cards.push({
-                minute: lines[1],
-                player: lines[0],
-                card: 'Yellow'
-            });
-
+        if (lines.length === 2 && /^\\d+'/.test(lines[1])) {
+            cards.push({ minute: lines[1], player: lines[0], card: 'Yellow' });
             return;
         }
-
-        if (
-            lines.length === 3 &&
-            /^\\d+'/.test(lines[2])
-        ) {
-
-            substitutions.push({
-                minute: lines[2],
-                playerOut: lines[1],
-                playerIn: lines[0]
-            });
-
+        if (lines.length === 3 && /^\\d+'/.test(lines[2])) {
+            substitutions.push({ minute: lines[2], playerOut: lines[1], playerIn: lines[0] });
             return;
         }
-
-        if (
-            lines.length === 3 &&
-            /^\\d+'/.test(lines[0])
-        ) {
-
-            substitutions.push({
-                minute: lines[0],
-                playerOut: lines[2],
-                playerIn: lines[1]
-            });
-
+        if (lines.length === 3 && /^\\d+'/.test(lines[0])) {
+            substitutions.push({ minute: lines[0], playerOut: lines[2], playerIn: lines[1] });
             return;
         }
-
     });
 
-    let output = '';
-
-    output += 'Goals\\n';
-    output += 'Minute\\tPlayer\\tScore\\n';
-
-    goals.forEach(g => {
-        output += \`\${g.minute}\\t\${g.player}\\t\${g.score}\\n\`;
-    });
-
-    output += '\\n';
-
-    output += 'Cards\\n';
-    output += 'Minute\\tPlayer\\tCard\\n';
-
-    cards.forEach(c => {
-        output += \`\${c.minute}\\t\${c.player}\\t\${c.card}\\n\`;
-    });
-
-    output += '\\n';
-
-    output += 'Substitutions\\n';
-    output += 'Minute\\tPlayer Out\\tPlayer In\\n';
-
-    substitutions.forEach(s => {
-        output += \`\${s.minute}\\t\${s.playerOut}\\t\${s.playerIn}\\n\`;
-    });
+    let output = 'Goals\\nMinute\\tPlayer\\tScore\\n';
+    goals.forEach(g => { output += \`\${g.minute}\\t\${g.player}\\t\${g.score}\\n\`; });
+    output += '\\nCards\\nMinute\\tPlayer\\tCard\\n';
+    cards.forEach(c => { output += \`\${c.minute}\\t\${c.player}\\t\${c.card}\\n\`; });
+    output += '\\nSubstitutions\\nMinute\\tPlayer Out\\tPlayer In\\n';
+    substitutions.forEach(s => { output += \`\${s.minute}\\t\${s.playerOut}\\t\${s.playerIn}\\n\`; });
 
     console.clear();
     console.log(output);
-
     copy(output);
-
     console.log('✅ Copied to clipboard');
-
 })();`;
 
         const CONSOLE_CODE_2 = `(() => {
-
-    // =========================
-    // TEAM NAMES
-    // =========================
-
-    const homeTeam =
-        document.querySelector('.club_name_home')?.childNodes[0]?.textContent?.trim()
-        || document.querySelector('.club_name_home')?.innerText?.split('\\n')[0]?.trim()
-        || 'Home';
-
-    const awayTeam =
-        document.querySelector('.club_name_away')?.childNodes[0]?.textContent?.trim()
-        || document.querySelector('.club_name_away')?.innerText?.split('\\n')[0]?.trim()
-        || 'Away';
-
-    // =========================
-    // LINEUPS
-    // =========================
+    const homeTeam = document.querySelector('.club_name_home')?.childNodes[0]?.textContent?.trim()
+        || document.querySelector('.club_name_home')?.innerText?.split('\\n')[0]?.trim() || 'Home';
+    const awayTeam = document.querySelector('.club_name_away')?.childNodes[0]?.textContent?.trim()
+        || document.querySelector('.club_name_away')?.innerText?.split('\\n')[0]?.trim() || 'Away';
 
     const homePlayers = [];
     const awayPlayers = [];
-
-    const homeFormation =
-        document.querySelector('.team-formation-home');
-
-    const awayFormation =
-        document.querySelector('.team-formation-away');
+    const homeFormation = document.querySelector('.team-formation-home');
+    const awayFormation = document.querySelector('.team-formation-away');
 
     function extractPlayers(teamEl) {
-
         const players = [];
-
         if (!teamEl) return players;
-
         const lines = teamEl.querySelectorAll('.team_formation_line');
-
         lines.forEach(line => {
-
-            const text = line.innerText
-                .replace(/\\n/g, ' ')
-                .replace(/\\s+/g, ' ')
-                .trim();
-
+            const text = line.innerText.replace(/\\n/g, ' ').replace(/\\s+/g, ' ').trim();
             const matches = [...text.matchAll(/(\\d+)\\s+([^0-9]+?)(?=\\s+\\d+|$)/g)];
-
-            matches.forEach(m => {
-
-                players.push({
-                    number: m[1],
-                    player: m[2].trim()
-                });
-
-            });
-
+            matches.forEach(m => { players.push({ number: m[1], player: m[2].trim() }); });
         });
-
         return players;
     }
 
     homePlayers.push(...extractPlayers(homeFormation));
     awayPlayers.push(...extractPlayers(awayFormation));
 
-    // =========================
-    // REFEREES
-    // =========================
-
     const referees = [];
+    document.querySelectorAll('.match_referees_category_content').forEach(el => {
+        const lines = el.innerText.split('\\n').map(x => x.trim()).filter(Boolean);
+        if (lines.length < 2) return;
+        const rolePT = lines[0];
+        if (rolePT === 'Árbitro') {
+            referees.push({ role: 'Referee', name: lines[1] });
+        } else if (rolePT === 'Árbitros assistentes') {
+            lines[1].split(',').map(x => x.trim()).forEach(astName => {
+                if (astName) referees.push({ role: 'Assistant Referee', name: astName });
+            });
+        } else if (rolePT === '4º árbitro') {
+            referees.push({ role: 'Fourth official', name: lines[1] });
+        }
+    });
 
-    document
-        .querySelectorAll('.match_referees_category_content')
-        .forEach(el => {
-
-            const lines = el.innerText
-                .split('\\n')
-                .map(x => x.trim())
-                .filter(Boolean);
-
-            if (lines.length < 2) return;
-
-            const rolePT = lines[0];
-
-            // Referee
-            if (rolePT === 'Árbitro') {
-
-                referees.push({
-                    role: 'Referee',
-                    name: lines[1]
-                });
-
-            }
-
-            // Assistant Referees
-            else if (rolePT === 'Árbitros assistentes') {
-
-                const assistants = lines[1]
-                    .split(',')
-                    .map(x => x.trim());
-
-                assistants.forEach(astName => {
-                    if (astName) {
-                        referees.push({
-                            role: 'Assistant Referee',
-                            name: astName
-                        });
-                    }
-                });
-
-            }
-
-            // Fourth Official
-            else if (rolePT === '4º árbitro') {
-
-                referees.push({
-                    role: 'Fourth official',
-                    name: lines[1]
-                });
-
-            }
-
-        });
-
-    console.log("Official Referee Parsed:", referees);
-    console.log("Referee Count:", referees.length);
-
-    // =========================
-    // OUTPUT
-    // =========================
-
-    let output = '';
-
-    output += \`Lineups (\${homeTeam} vs \${awayTeam})\\n\`;
-    output += \`\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
-
-    const maxRows =
-        Math.max(
-            homePlayers.length,
-            awayPlayers.length
-        );
-
+    let output = \`Lineups (\${homeTeam} vs \${awayTeam})\\n\${homeTeam} Player\\tShirt No. (H)\\t\${awayTeam} Player\\tShirt No. (A)\\n\`;
+    const maxRows = Math.max(homePlayers.length, awayPlayers.length);
     for (let i = 0; i < maxRows; i++) {
-
         const h = homePlayers[i] || {};
         const a = awayPlayers[i] || {};
-
-        output +=
-            \`\${h.player || ''}\\t\${h.number || ''}\\t\${a.player || ''}\\t\${a.number || ''}\\n\`;
+        output += \`\${h.player || ''}\\t\${h.number || ''}\\t\${a.player || ''}\\t\${a.number || ''}\\n\`;
     }
-
-    output += '\\n';
-    output += 'Referees\\n';
-    output += 'Role\\tName\\n';
-
-    referees.forEach(r => {
-        output += \`\${r.role}\\t\${r.name}\\n\`;
-    });
+    output += '\\nReferees\\nRole\\tName\\n';
+    referees.forEach(r => { output += \`\${r.role}\\t\${r.name}\\n\`; });
 
     console.clear();
     console.log(output);
     copy(output);
-
     console.log('✅ Lineups + Referees copied');
-
 })();`;
 
         function copyConsoleCode1() {
-            navigator.clipboard.writeText(CONSOLE_CODE_1).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('Failed to copy console code 1: ', err);
-            });
+            navigator.clipboard.writeText(CONSOLE_CODE_1).then(() => { showToast(); });
         }
 
         function copyConsoleCode2() {
-            navigator.clipboard.writeText(CONSOLE_CODE_2).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('Failed to copy console code 2: ', err);
-            });
+            navigator.clipboard.writeText(CONSOLE_CODE_2).then(() => { showToast(); });
         }
 
         function normalizeName(text) {
@@ -706,28 +491,12 @@
             return text
                 .normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
-                .replace(/đ/g, "d")
-                .replace(/Đ/g, "D")
-                .replace(/ž/g, "z")
-                .replace(/Ž/g, "Z")
-                .replace(/č/g, "c")
-                .replace(/Č/g, "C")
-                .replace(/ć/g, "c")
-                .replace(/Ć/g, "C")
-                .replace(/š/g, "s")
-                .replace(/Š/g, "S")
+                .replace(/đ/g, "d").replace(/Đ/g, "D")
+                .replace(/ž/g, "z").replace(/Ž/g, "Z")
+                .replace(/č/g, "c").replace(/Č/g, "C")
+                .replace(/ć/g, "c").replace(/Ć/g, "C")
+                .replace(/š/g, "s").replace(/Š/g, "S")
                 .trim();
-        }
-
-        function extractMinuteAndRest(rawString) {
-            let str = (rawString || "").trim();
-            let minute = "-";
-            const minMatch = str.match(/^(\d+['\+]?\d*')\s*/);
-            if (minMatch) {
-                minute = minMatch[1];
-                str = str.substring(minMatch[0].length).trim();
-            }
-            return { minute, rest: str };
         }
 
         function showCoreParser() {
@@ -747,7 +516,6 @@
         function copyReportOutput(containerId) {
             const container = document.getElementById(containerId);
             if (!container) return;
-
             let outputLines = [];
             const childElements = container.children;
             Array.from(childElements).forEach(el => {
@@ -765,13 +533,7 @@
                 }
             });
 
-            const finalClipboardText = outputLines.join('\n').trim();
-
-            navigator.clipboard.writeText(finalClipboardText).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
+            navigator.clipboard.writeText(outputLines.join('\n').trim()).then(() => { showToast(); });
         }
 
         function showToast() {
@@ -785,7 +547,7 @@
 
         function normalizeMinute(minStr) {
           if (!minStr) return '';
-          let cleaned = minStr.replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
+          let cleaned = String(minStr).replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, '');
           cleaned = cleaned.replace(/'/g, '').trim();
           return cleaned;
         }
@@ -817,17 +579,11 @@
           return matrix[b.length][a.length];
         }
 
-        function comparePlayerNames(name1, name2) {
+        function calculateNameSimilarity(name1, name2) {
           const n1 = normalizeNameCompare(name1);
           const n2 = normalizeNameCompare(name2);
-
-          if (!name1 || !name2) {
-            return false;
-          }
-
-          if (n1 === n2) {
-            return true;
-          }
+          if (!n1 || !n2) return 0;
+          if (n1 === n2) return 1.0;
 
           const tokens1 = n1.split(/\s+/);
           const tokens2 = n2.split(/\s+/);
@@ -836,77 +592,56 @@
           const firstName1 = tokens1[0];
           const firstName2 = tokens2[0];
 
+          // Same surname and matching initial (e.g. "E. Felicíssimo" vs "Eduardo Felicíssimo")
           if (surname1 === surname2) {
-              if (
-                  firstName1 &&
-                  firstName2 &&
-                  firstName1.charAt(0) === firstName2.charAt(0)
-              ) {
-                  return true;
+              if (firstName1 && firstName2 && firstName1.charAt(0) === firstName2.charAt(0)) {
+                  return 0.95;
               }
+              return 0.85;
           }
 
-          if (surname1 === surname2) {
-            if (tokens1.length === 1 || tokens2.length === 1) {
-              return true;
-            }
-            if (firstName1[0] === firstName2[0]) {
-              return true;
-            }
+          if (firstName1 === firstName2 && (tokens1.length === 1 || tokens2.length === 1)) {
+              return 0.80;
           }
 
-          if (firstName1 === firstName2 && (tokens1.length === 1 || tokens2.length === 1 || surname1 === surname2)) {
-            return true;
-          }
-
-          const commonTokens = tokens1.filter(t => tokens2.includes(t));
-          if (commonTokens.length > 0 && (commonTokens.includes(surname1) || commonTokens.includes(surname2))) {
-            return true;
-          }
-
-          if (surname1 && surname2 && levenshtein(surname1, surname2) <= 2 && Math.abs(surname1.length - surname2.length) <= 2) {
-            if (firstName1[0] === firstName2[0]) {
-              return true;
-            }
-          }
-
-          if (n1.includes(n2) || n2.includes(n1)) {
-            return true;
-          }
-
-          return false;
+          const maxLen = Math.max(n1.length, n2.length);
+          const dist = levenshtein(n1, n2);
+          return 1.0 - (dist / maxLen);
         }
 
-function isHeaderRow(rowValues) {
-  const joined = rowValues.join(' ').toLowerCase().trim();
-  if (!joined) return true;
+        function comparePlayerNames(name1, name2) {
+          return calculateNameSimilarity(name1, name2) >= 0.70;
+        }
 
-  // Exact match for known table headers including lineups and cards
-  const exactHeaders = [
-    'role name',
-    'minute player score',
-    'minute player team assist score',
-    'minute player card',
-    'minute team player out player in',
-    'minute player out player in',
-    'shirt no. (h)',
-    'shirt no. (a)',
-    'player shirt no.'
-  ];
+        function isHeaderRow(rowValues) {
+          const joined = rowValues.join(' ').toLowerCase().trim();
+          if (!joined) return true;
 
-  if (exactHeaders.includes(joined)) return true;
+          const exactHeaders = [
+            'role name',
+            'minute player score',
+            'minute player goal format',
+            'minute player team assist score',
+            'minute player team assist format',
+            'minute player card',
+            'minute team player out player in',
+            'minute player out player in',
+            'shirt no. (h)',
+            'shirt no. (a)',
+            'player shirt no.'
+          ];
 
-  // Additional structural check for column header fragments
-  const firstCol = rowValues[0].toLowerCase().trim();
-  const secondCol = rowValues[1] ? rowValues[1].toLowerCase().trim() : '';
+          if (exactHeaders.includes(joined)) return true;
 
-  if (firstCol === 'minute' && secondCol === 'player') return true;
-  if (firstCol === 'role' && secondCol === 'name') return true;
-  if (secondCol.includes('shirt no')) return true;
+          const firstCol = rowValues[0].toLowerCase().trim();
+          const secondCol = rowValues[1] ? rowValues[1].toLowerCase().trim() : '';
 
-  // Strict check for "Role Name" column headers
-  return rowValues.length === 2 && firstCol === 'role' && secondCol === 'name';
-}
+          if (firstCol === 'minute' && secondCol === 'player') return true;
+          if (firstCol === 'role' && secondCol === 'name') return true;
+          if (secondCol.includes('shirt no')) return true;
+
+          return rowValues.length === 2 && firstCol === 'role' && secondCol === 'name';
+        }
 
         function parseRow(line) {
           if (line.includes('\t')) {
@@ -949,7 +684,7 @@ function isHeaderRow(rowValues) {
             switch (currentSection) {
               case 'goals':
                 if (row.length >= 2) {
-                  result.goals.push({ minute: row[0], player: row[1], team: row[2] || '', assist: row[3] || '', type: row[4] || 'Goal' });
+                  result.goals.push({ minute: row[0], player: row[1], team: row[2] || '', assist: row[3] || '', format: row[4] || row[3] || 'Goal' });
                 }
                 break;
               case 'cards':
@@ -989,268 +724,389 @@ function isHeaderRow(rowValues) {
                 }
                 break;
               case 'refs':
-  if (row.length >= 2) {
-    let role = row[0].trim();
-    const name = row.slice(1).join(' ').trim();
-
-    // Standardize "Assistants" or "Assistant" to "Assistant Referee"
-    if (/^assistants?$/i.test(role)) {
-      role = 'Assistant Referee';
-    }
-
-    result.refs.push({
-      role: role,
-      name: name
-    });
-  }
-  break;
+                if (row.length >= 2) {
+                  let role = row[0].trim();
+                  const name = row.slice(1).join(' ').trim();
+                  if (/^assistants?$/i.test(role)) {
+                    role = 'Assistant Referee';
+                  }
+                  result.refs.push({ role: role, name: name });
+                }
+                break;
             }
           }
           return result;
         }
 
+        /* 
+           FIX 1 & 3: Goals Comparison Logic
+           - EXCLUDES Team column from comparison logic completely.
+           - Matches events within the same minute using Player Name & Goal Format score similarity to prevent sequential row-order mismatching.
+        */
         function compareGoals(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
 
           hostedList.forEach(h => {
-            let matchIndex = widgetList.findIndex((w, idx) => {
-              if (widgetMatched.has(idx)) return false;
-              const hMin = parseInt(normalizeMinute(h.minute)) || 0;
-              const wMin = parseInt(normalizeMinute(w.minute)) || 0;
-              const minMatch = Math.abs(hMin - wMin) <= 1 || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
-              const playerMatch = comparePlayerNames(h.player, w.player);
-              return minMatch && playerMatch;
+            const hMin = normalizeMinute(h.minute);
+
+            // Group candidates by Minute
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
+              }
             });
-            
-            if (matchIndex !== -1) {
-              widgetMatched.add(matchIndex);
-              let w = widgetList[matchIndex];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
+
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+              let score = calculateNameSimilarity(h.player, w.player);
+
+              const hFmt = (h.format || '').toLowerCase();
+              const wFmt = (w.format || '').toLowerCase();
+              if (hFmt === wFmt || (hFmt.includes('goal') && wFmt.includes('goal') && !hFmt.includes('penalty') && !wFmt.includes('penalty') && !hFmt.includes('own') && !wFmt.includes('own'))) {
+                score += 0.5;
+              }
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMatchIdx = idx;
+              }
+            });
+
+            // If no match on same minute, search across all minutes as fallback
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  let score = calculateNameSimilarity(h.player, w.player);
+                  if (score > 0.70 && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
               });
+            }
+
+            if (bestMatchIdx !== -1) {
+              widgetMatched.add(bestMatchIdx);
+              let w = widgetList[bestMatchIdx];
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.player, w.player)) mismatches.push('Player Mismatch');
+              
+              const hFmt = (h.format || '').toLowerCase();
+              const wFmt = (w.format || '').toLowerCase();
+              if (hFmt !== wFmt && !(hFmt.includes('goal') && wFmt.includes('goal') && !hFmt.includes('penalty') && !wFmt.includes('penalty') && !hFmt.includes('own') && !wFmt.includes('own'))) {
+                  mismatches.push('Goal Format Mismatch');
+              }
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
             } else {
-              results.push({
-                hosted: h,
-                widget: {},
-                status: 'MISSING'
-              });
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
             }
           });
 
           widgetList.forEach((w, idx) => {
             if (!widgetMatched.has(idx)) {
-              results.push({
-                hosted: {},
-                widget: w,
-                status: 'MISSING'
-              });
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
             }
           });
 
           return results;
         }
 
+        /* 
+           FIX 1 & 3: Cards Comparison Logic
+           - EXCLUDES Team column from comparison logic completely.
+           - Matches events within the same minute using Player Name & Card Type to prevent sequential row-order mismatching.
+        */
         function compareCards(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
 
           hostedList.forEach(h => {
-            let matchIndex = widgetList.findIndex((w, idx) => {
-              if (widgetMatched.has(idx)) return false;
-              const hMin = parseInt(normalizeMinute(h.minute)) || 0;
-              const wMin = parseInt(normalizeMinute(w.minute)) || 0;
-              const minMatch = Math.abs(hMin - wMin) <= 1 || (hMin >= 45 && hMin <= 46 && wMin >= 45 && wMin <= 46);
-              return minMatch && comparePlayerNames(h.player, w.player);
+            const hMin = normalizeMinute(h.minute);
+
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
+              }
             });
 
-            if (matchIndex !== -1) {
-              widgetMatched.add(matchIndex);
-              let w = widgetList[matchIndex];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+              let score = calculateNameSimilarity(h.player, w.player);
+              if (normalizeNameCompare(h.card) === normalizeNameCompare(w.card)) score += 0.5;
+
+              if (score > bestScore) {
+                bestScore = score;
+                bestMatchIdx = idx;
+              }
+            });
+
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  let score = calculateNameSimilarity(h.player, w.player);
+                  if (score > 0.70 && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
               });
+            }
+
+            if (bestMatchIdx !== -1) {
+              widgetMatched.add(bestMatchIdx);
+              let w = widgetList[bestMatchIdx];
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.player, w.player)) mismatches.push('Player Mismatch');
+              if (normalizeNameCompare(h.card) !== normalizeNameCompare(w.card)) mismatches.push('Card Type Mismatch');
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
             } else {
-              results.push({
-                hosted: h,
-                widget: {},
-                status: 'MISSING'
-              });
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
             }
           });
 
           widgetList.forEach((w, idx) => {
             if (!widgetMatched.has(idx)) {
-              results.push({
-                hosted: {},
-                widget: w,
-                status: 'MISSING'
-              });
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
             }
           });
 
           return results;
         }
 
+        /* 
+           FIX 2: Required Substitution Matching Priority Logic:
+           1. Minute Grouping
+           2. Player Out Matching
+           3. Player In Matching
+           4. Similarity Score
+           5. Row Order (last resort only)
+        */
         function compareSubs(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
 
           hostedList.forEach(h => {
-            const hMin = parseInt(normalizeMinute(h.minute)) || 0;
-            let bestMatchIdx = -1;
-            let bestScore = -1;
+            const hMin = normalizeMinute(h.minute);
 
-            widgetList.forEach((w, wIdx) => {
-              if (widgetMatched.has(wIdx)) return;
-              const wMin = parseInt(normalizeMinute(w.minute)) || 0;
-              
-              if (Math.abs(hMin - wMin) > 1) return;
-
-              let score = 0;
-              if (comparePlayerNames(h.out, w.out)) score += 2;
-              if (comparePlayerNames(h.in, w.in)) score += 2;
-
-              if (score > bestScore) {
-                bestScore = score;
-                bestMatchIdx = wIdx;
+            // Step 1: Group events by minute
+            let candidateIndices = [];
+            widgetList.forEach((w, idx) => {
+              if (!widgetMatched.has(idx) && normalizeMinute(w.minute) === hMin) {
+                candidateIndices.push(idx);
               }
             });
 
-            if (bestMatchIdx !== -1 && bestScore > 0) {
+            let bestMatchIdx = -1;
+            let bestScore = -1;
+
+            // Step 2 & 3 & 4: Evaluate candidates within the same minute using priority rules
+            candidateIndices.forEach(idx => {
+              const w = widgetList[idx];
+
+              const outScore = calculateNameSimilarity(h.out, w.out);
+              const inScore = calculateNameSimilarity(h.in, w.in);
+
+              let combinedScore = 0;
+
+              // Priority 2: Match using Player Out first
+              if (outScore >= 0.70) {
+                combinedScore += 10 + outScore;
+              }
+
+              // Priority 3: Match using Player In if Out cannot determine
+              if (inScore >= 0.70) {
+                combinedScore += 5 + inScore;
+              }
+
+              // Priority 4: Total Similarity Score
+              if (outScore < 0.70 && inScore < 0.70) {
+                combinedScore = (outScore + inScore) / 2;
+              }
+
+              if (combinedScore > bestScore && combinedScore > 0.40) {
+                bestScore = combinedScore;
+                bestMatchIdx = idx;
+              }
+            });
+
+            // If no match found within minute, search across remaining events
+            if (bestMatchIdx === -1) {
+              widgetList.forEach((w, idx) => {
+                if (!widgetMatched.has(idx)) {
+                  const outScore = calculateNameSimilarity(h.out, w.out);
+                  const inScore = calculateNameSimilarity(h.in, w.in);
+                  const score = (outScore + inScore) / 2;
+
+                  if ((outScore >= 0.70 || inScore >= 0.70) && score > bestScore) {
+                    bestScore = score;
+                    bestMatchIdx = idx;
+                  }
+                }
+              });
+            }
+
+            // Priority 5: Fallback to Row Order within same minute if still unmatched
+            if (bestMatchIdx === -1 && candidateIndices.length > 0) {
+              bestMatchIdx = candidateIndices[0];
+            }
+
+            if (bestMatchIdx !== -1) {
               widgetMatched.add(bestMatchIdx);
               let w = widgetList[bestMatchIdx];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
-              });
+              let mismatches = [];
+
+              if (normalizeMinute(h.minute) !== normalizeMinute(w.minute)) mismatches.push('Minutes Mismatch');
+              if (!comparePlayerNames(h.out, w.out)) mismatches.push('Player Out Mismatch');
+              if (!comparePlayerNames(h.in, w.in)) mismatches.push('Player In Mismatch');
+
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status, description });
             } else {
-              results.push({
-                hosted: h,
-                widget: {},
-                status: 'MISSING'
-              });
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
             }
           });
 
-          widgetList.forEach((w, wIdx) => {
-            if (!widgetMatched.has(wIdx)) {
-              results.push({
-                hosted: {},
-                widget: w,
-                status: 'MISSING'
-              });
+          widgetList.forEach((w, idx) => {
+            if (!widgetMatched.has(idx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
             }
           });
 
           return results;
         }
 
-        function compareLineupsOrBench(hostedList, widgetList, reportType) {
+        function compareLineupsOrBench(hostedList, widgetList) {
           let results = [];
           let widgetMatched = new Set();
 
           hostedList.forEach(h => {
             let matchIdx = widgetList.findIndex((w, wIdx) => {
               if (widgetMatched.has(wIdx)) return false;
-              if (w.team !== h.team) return false;
-
-              const shirtH = h.shirt ? String(h.shirt).trim() : '';
-              const shirtW = w.shirt ? String(w.shirt).trim() : '';
-
-              if (shirtH && shirtW && shirtH === shirtW) {
-                return true;
-              }
-
               return comparePlayerNames(h.player, w.player);
             });
+
+            if (matchIdx === -1) {
+              const shirtH = h.shirt ? String(h.shirt).trim() : '';
+              if (shirtH !== '') {
+                matchIdx = widgetList.findIndex((w, wIdx) => {
+                  if (widgetMatched.has(wIdx)) return false;
+                  const shirtW = w.shirt ? String(w.shirt).trim() : '';
+                  return shirtW !== '' && shirtH === shirtW;
+                });
+              }
+            }
 
             if (matchIdx !== -1) {
               widgetMatched.add(matchIdx);
               let w = widgetList[matchIdx];
-              results.push({
-                hosted: h,
-                widget: w,
-                status: 'MATCH'
-              });
+
+              const isNameMatch = comparePlayerNames(h.player, w.player);
+              const isShirtMatch = String(h.shirt || '').trim() === String(w.shirt || '').trim();
+
+              let status = '';
+              let description = '';
+
+              if (isNameMatch && isShirtMatch) {
+                status = 'MATCH';
+                description = 'Perfect Match';
+              } else if (isNameMatch && !isShirtMatch) {
+                status = 'SHIRT NUMBER MISMATCH';
+                description = 'Shirt Number Mismatch';
+              } else if (!isNameMatch && isShirtMatch) {
+                status = 'PLAYER MISMATCH';
+                description = 'Player Mismatch';
+              } else {
+                status = 'MISMATCH';
+                description = 'Player Mismatch, Shirt Number Mismatch';
+              }
+
+              results.push({ hosted: h, widget: w, status, description });
             } else {
-              results.push({
-                hosted: h,
-                widget: {},
-                status: 'MISSING'
-              });
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
             }
           });
 
           widgetList.forEach((w, wIdx) => {
             if (!widgetMatched.has(wIdx)) {
-              results.push({
-                hosted: {},
-                widget: w,
-                status: 'MISSING'
-              });
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
             }
           });
 
           return results;
         }
 
+        /* 
+           FIX 4: Referee Report Logic & Column Ordering
+           - Retains original role and name evaluation logic.
+           - Sets status and description for UI alignment.
+        */
         function compareRefs(hostedList, widgetList) {
-  let results = [];
-  let widgetMatched = new Set();
+          let results = [];
+          let widgetMatched = new Set();
 
-  hostedList.forEach(h => {
-    let matchIdx = widgetList.findIndex((w, wIdx) => {
-      if (widgetMatched.has(wIdx)) return false;
-      
-      const nameMatch = comparePlayerNames(h.name, w.name);
-      const roleMatch = normalizeNameCompare(h.role) === normalizeNameCompare(w.role);
-      
-      return roleMatch && nameMatch;
-    });
+          hostedList.forEach(h => {
+            let matchIdx = widgetList.findIndex((w, wIdx) => {
+              if (widgetMatched.has(wIdx)) return false;
+              const nameMatch = comparePlayerNames(h.name, w.name);
+              const roleMatch = normalizeNameCompare(h.role) === normalizeNameCompare(w.role);
+              return roleMatch && nameMatch;
+            });
 
-    // Fallback: If no exact role+name match, match solely on player name
-    if (matchIdx === -1) {
-      matchIdx = widgetList.findIndex((w, wIdx) => {
-        if (widgetMatched.has(wIdx)) return false;
-        return comparePlayerNames(h.name, w.name);
-      });
-    }
+            if (matchIdx === -1) {
+              matchIdx = widgetList.findIndex((w, wIdx) => {
+                if (widgetMatched.has(wIdx)) return false;
+                return comparePlayerNames(h.name, w.name);
+              });
+            }
 
-    if (matchIdx !== -1) {
-      widgetMatched.add(matchIdx);
-      let w = widgetList[matchIdx];
-      results.push({
-        hosted: h,
-        widget: w,
-        status: 'MATCH'
-      });
-    } else {
-      results.push({
-        hosted: h,
-        widget: {},
-        status: 'MISSING'
-      });
-    }
-  });
+            if (matchIdx !== -1) {
+              widgetMatched.add(matchIdx);
+              let w = widgetList[matchIdx];
+              let mismatches = [];
 
-  widgetList.forEach((w, wIdx) => {
-    if (!widgetMatched.has(wIdx)) {
-      results.push({
-        hosted: {},
-        widget: w,
-        status: 'MISSING'
-      });
-    }
-  });
+              if (normalizeNameCompare(h.role) !== normalizeNameCompare(w.role)) mismatches.push('Role Mismatch');
+              if (!comparePlayerNames(h.name, w.name)) mismatches.push('Name Mismatch');
 
-  return results;
-}
+              const status = mismatches.length === 0 ? 'MATCH' : 'MISMATCH';
+              const description = mismatches.length === 0 ? 'Perfect Match' : mismatches.join(', ');
+
+              results.push({ hosted: h, widget: w, status: status, description: description });
+            } else {
+              results.push({ hosted: h, widget: {}, status: 'MISSING', description: 'Missing in Official' });
+            }
+          });
+
+          widgetList.forEach((w, wIdx) => {
+            if (!widgetMatched.has(wIdx)) {
+              results.push({ hosted: {}, widget: w, status: 'MISSING', description: 'Missing in Hosted' });
+            }
+          });
+
+          return results;
+        }
 
         function compareReports() {
           const hostedText = document.getElementById('coreDataInput').value;
@@ -1263,9 +1119,6 @@ function isHeaderRow(rowValues) {
 
           const hosted = parseOptaText(hostedText);
           const widget = parseOptaText(widgetText);
-
-          console.log("HOSTED REFS:", hosted.refs);
-          console.log("OFFICIAL REFS:", widget.refs);
 
           document.getElementById('diagHostedGoals').innerText = hosted.goals.length;
           document.getElementById('diagWidgetGoals').innerText = widget.goals.length;
@@ -1284,8 +1137,8 @@ function isHeaderRow(rowValues) {
             goals: compareGoals(hosted.goals, widget.goals),
             cards: compareCards(hosted.cards, widget.cards),
             subs: compareSubs(hosted.subs, widget.subs),
-            lineups: compareLineupsOrBench(hosted.lineups, widget.lineups, 'Lineup'),
-            bench: compareLineupsOrBench(hosted.bench, widget.bench, 'Bench'),
+            lineups: compareLineupsOrBench(hosted.lineups, widget.lineups),
+            bench: compareLineupsOrBench(hosted.bench, widget.bench),
             refs: compareRefs(hosted.refs, widget.refs)
           };
 
@@ -1308,9 +1161,12 @@ function isHeaderRow(rowValues) {
 
           categories.forEach(cat => {
             const items = results[cat.key] || [];
-            const counts = { MATCH: 0, MISSING: 0, MISMATCH: 0 };
+            const counts = { MATCH: 0, MISSING: 0, MISMATCH: 0, PARTIAL: 0 };
             items.forEach(i => {
-              if (counts[i.status] !== undefined) counts[i.status]++;
+              if (i.status === 'MATCH') counts.MATCH++;
+              else if (i.status === 'MISSING') counts.MISSING++;
+              else if (i.status === 'SHIRT NUMBER MISMATCH' || i.status === 'PLAYER MISMATCH') counts.PARTIAL++;
+              else counts.MISMATCH++;
             });
 
             const card = document.createElement('div');
@@ -1319,8 +1175,9 @@ function isHeaderRow(rowValues) {
               <div class="title">${cat.title}</div>
               <div class="kpi-badges">
                 <span class="kpi-badge" style="background:#dcfce7;color:#166534" title="MATCH">${counts.MATCH}</span>
-                <span class="kpi-badge" style="background:#f3e8ff;color:#6b21a8" title="MISSING">${counts.MISSING}</span>
+                <span class="kpi-badge" style="background:#e6f2ff;color:#004085" title="PARTIAL">${counts.PARTIAL}</span>
                 <span class="kpi-badge" style="background:#fee2e2;color:#991b1b" title="MISMATCH">${counts.MISMATCH}</span>
+                <span class="kpi-badge" style="background:#f3e8ff;color:#6b21a8" title="MISSING">${counts.MISSING}</span>
               </div>
             `;
             container.appendChild(card);
@@ -1350,15 +1207,16 @@ function isHeaderRow(rowValues) {
 
           let headers = [];
           if (currentTab === 'goals') {
-            headers = ['Status', 'Hosted Min', 'Hosted Player', 'Hosted Team', 'Official Min', 'Official Player', 'Official Team'];
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Goal Format', 'Official Min', 'Official Player', 'Official Team', 'Official Goal Format', 'Description', 'Status'];
           } else if (currentTab === 'cards') {
-            headers = ['Status', 'Hosted Min', 'Hosted Player', 'Hosted Card', 'Official Min', 'Official Player', 'Official Card'];
+            headers = ['Hosted Min', 'Hosted Player', 'Hosted Team', 'Hosted Card Type', 'Official Min', 'Official Player', 'Official Team', 'Official Card Type', 'Description', 'Status'];
           } else if (currentTab === 'subs') {
-            headers = ['Status', 'Hosted Min', 'Hosted Team', 'Hosted Out', 'Hosted In', 'Official Min', 'Official Team', 'Official Out', 'Official In'];
+            headers = ['Hosted Min', 'Hosted Player Out', 'Hosted Player In', 'Hosted Team', 'Official Min', 'Official Player Out', 'Official Player In', 'Official Team', 'Description', 'Status'];
           } else if (currentTab === 'lineups' || currentTab === 'bench') {
-            headers = ['Status', 'Team', 'Hosted Player', 'Hosted Shirt', 'Official Player', 'Official Shirt'];
+            headers = ['Hosted Player', 'Hosted Shirt', 'Official Player', 'Official Shirt', 'Description', 'Status'];
           } else if (currentTab === 'refs') {
-            headers = ['Status', 'Hosted Role', 'Hosted Name', 'Official Role', 'Official Name'];
+            /* FIX 4: Status moved to far-right side for Referee Report */
+            headers = ['Hosted Role', 'Hosted Name', 'Official Role', 'Official Name', 'Description', 'Status'];
           }
 
           let trHead = document.createElement('tr');
@@ -1396,48 +1254,65 @@ function isHeaderRow(rowValues) {
             let h = item.hosted || {};
             let w = item.widget || {};
 
-            let badgeClass = 'badge-match';
-            if (item.status === 'MISMATCH') badgeClass = 'badge-mismatch';
-            if (item.status === 'MISSING') badgeClass = 'badge-missing';
-
-            let statusTd = document.createElement('td');
-            statusTd.innerHTML = `<span class="badge ${badgeClass}" style="padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; background: ${item.status === 'MATCH' ? '#dcfce7' : item.status === 'MISMATCH' ? '#fee2e2' : '#f3e8ff'}; color: ${item.status === 'MATCH' ? '#166534' : item.status === 'MISMATCH' ? '#991b1b' : '#6b21a8'}">${item.status}</span>`;
-            tr.appendChild(statusTd);
+            // Apply Row Color Classes based on Status
+            if (item.status === 'MATCH') {
+                tr.classList.add('row-match');
+            } else if (item.status === 'SHIRT NUMBER MISMATCH' || item.status === 'PLAYER MISMATCH') {
+                tr.classList.add('row-partial-mismatch'); // Light Blue row
+            } else if (item.status === 'MISMATCH') {
+                tr.classList.add('row-mismatch'); // Light Red row
+            } else if (item.status === 'MISSING') {
+                tr.classList.add('row-missing'); // Light Purple row
+            }
 
             if (currentTab === 'goals') {
               tr.appendChild(tdCell(h.minute));
               tr.appendChild(tdCell(h.player));
               tr.appendChild(tdCell(h.team));
+              tr.appendChild(tdCell(h.format));
               tr.appendChild(tdCell(w.minute));
               tr.appendChild(tdCell(w.player));
               tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(w.format));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
             } else if (currentTab === 'cards') {
               tr.appendChild(tdCell(h.minute));
               tr.appendChild(tdCell(h.player));
+              tr.appendChild(tdCell(h.team));
               tr.appendChild(tdCell(h.card));
               tr.appendChild(tdCell(w.minute));
               tr.appendChild(tdCell(w.player));
+              tr.appendChild(tdCell(w.team));
               tr.appendChild(tdCell(w.card));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
             } else if (currentTab === 'subs') {
               tr.appendChild(tdCell(h.minute));
-              tr.appendChild(tdCell(h.team));
               tr.appendChild(tdCell(h.out));
               tr.appendChild(tdCell(h.in));
+              tr.appendChild(tdCell(h.team));
               tr.appendChild(tdCell(w.minute));
-              tr.appendChild(tdCell(w.team));
               tr.appendChild(tdCell(w.out));
               tr.appendChild(tdCell(w.in));
+              tr.appendChild(tdCell(w.team));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
             } else if (currentTab === 'lineups' || currentTab === 'bench') {
-              tr.appendChild(tdCell(h.team || w.team));
               tr.appendChild(tdCell(h.player));
               tr.appendChild(tdCell(h.shirt));
               tr.appendChild(tdCell(w.player));
               tr.appendChild(tdCell(w.shirt));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
             } else if (currentTab === 'refs') {
+              /* FIX 4: Ref report cell rendering aligned with far-right Status column */
               tr.appendChild(tdCell(h.role));
               tr.appendChild(tdCell(h.name));
               tr.appendChild(tdCell(w.role));
               tr.appendChild(tdCell(w.name));
+              tr.appendChild(tdCell(item.description));
+              tr.appendChild(statusBadgeCell(item.status));
             }
 
             tbody.appendChild(tr);
@@ -1450,9 +1325,25 @@ function isHeaderRow(rowValues) {
           return td;
         }
 
+        function statusBadgeCell(status) {
+          let td = document.createElement('td');
+          let badgeClass = 'match';
+          
+          if (status === 'SHIRT NUMBER MISMATCH' || status === 'PLAYER MISMATCH') {
+            badgeClass = 'partial'; // Blue Badge
+          } else if (status === 'MISMATCH') {
+            badgeClass = 'mismatch'; // Red Badge
+          } else if (status === 'MISSING') {
+            badgeClass = 'missing'; // Purple Badge
+          }
+
+          td.innerHTML = `<span class="status-badge ${badgeClass}">${status}</span>`;
+          return td;
+        }
+
         function loadSampleData() {
-          document.getElementById('coreDataInput').value = `Goals\n12'\tJohn Smith\tHome Team\t-\tGoal\nCards\n34'\tDavid Miller\tAway Team\tYellow\nSubstitutions\n60'\tHome Team\tPlayer A\tPlayer B\nLineups\nJohn Smith\t1\nDavid Miller\t2\nReferees\nReferee\tMr. Referee`;
-          document.getElementById('widgetDataInput').value = `Goals\n12'\tJohn Smith\tHome Team\t-\tGoal\nCards\n34'\tDavid Miller\tAway Team\tYellow\nSubstitutions\n60'\tHome Team\tPlayer A\tPlayer B\nLineups\nJohn Smith\t1\nDavid Miller\t2\nReferees\nReferee\tMr. Referee`;
+          document.getElementById('coreDataInput').value = `Goals\n39'\tDavo\tPenafiel\t-\tGoal\n87'\tMax Svensson\tPenafiel\t-\tGoal\nCards\n34'\tDavid Miller\tTeam A\tYellow\nSubstitutions\n65'\tEduardo Felicíssimo\tMiguel Alves\n65'\tSamuel Justo\tLeonardo Varela\n65'\tGabriel Silva\tMiguel Almeida\nLineups\nCristiano Ronaldo\t10\nCristiano Ronaldo\t10\nReferees\nReferee\tMr. Referee`;
+          document.getElementById('widgetDataInput').value = `Goals\n39'\tDavo\tOfficial Team Name\t-\tGoal\n88'\tSvensson\tOfficial Team Name\t-\tGoal\nCards\n34'\tDavid Miller\tTeam B\tYellow\nSubstitutions\n65'\tE. Felicíssimo\tMiguel\n65'\tS. Justo\tL. Varela\n65'\tG. Silva\tM. Almeida\nLineups\nCristiano Ronaldo\t7\nBruno Fernandes\t10\nReferees\nReferee\tMr. Referee`;
           compareReports();
         }
 
@@ -1468,7 +1359,7 @@ function isHeaderRow(rowValues) {
           let csvContent = "data:text/csv;charset=utf-8,";
           Object.keys(results).forEach(tab => {
             results[tab].forEach(item => {
-              let row = [tab, item.status, JSON.stringify(item.hosted), JSON.stringify(item.widget)];
+              let row = [tab, item.status, item.description || '', JSON.stringify(item.hosted), JSON.stringify(item.widget)];
               csvContent += row.join(",") + "\r\n";
             });
           });
@@ -1591,9 +1482,9 @@ function isHeaderRow(rowValues) {
                                     
                                     let scoreType = "Goal";
                                     if (html.includes("evt-icon-PG")) {
-                                        scoreType = "Penalty (PG)";
+                                        scoreType = "Penalty Goal";
                                     } else if (html.includes("evt-icon-OG")) {
-                                        scoreType = "Own Goal (OG)";
+                                        scoreType = "Own Goal";
                                     }
 
                                     goals.push({
@@ -1601,7 +1492,7 @@ function isHeaderRow(rowValues) {
                                         player: playerName,
                                         team: teamRole === "Home" ? matchData.homeTeam : matchData.awayTeam,
                                         assist: "",
-                                        score: scoreType
+                                        format: scoreType
                                     });
                                 }
                             });
@@ -1665,7 +1556,7 @@ function isHeaderRow(rowValues) {
                                 minute: a.minute,
                                 player: a.player,
                                 team: a.team,
-                                card: "Red (Second Yellow)"
+                                card: "Red"
                             });
                             skipIndex.add(j);
                             foundMerged = true;
@@ -1866,9 +1757,9 @@ function isHeaderRow(rowValues) {
                 </div>
             `;
 
-            let goalsHTML = `<div class="section-header">Goals</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Assist</th><th>Score</th></tr></thead><tbody>`;
+            let goalsHTML = `<div class="section-header">Goals</div><table><thead><tr><th>Minute</th><th>Player</th><th>Team</th><th>Assist</th><th>Goal Format</th></tr></thead><tbody>`;
             reports.goals.forEach(g => {
-                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.score}</td></tr>`;
+                goalsHTML += `<tr><td>${g.minute}</td><td>${g.player}</td><td>${g.team}</td><td>${g.assist}</td><td>${g.format}</td></tr>`;
             });
             goalsHTML += `</tbody></table>`;
             htmlContent += goalsHTML;
